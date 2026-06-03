@@ -1,0 +1,21 @@
+:root {
+  background-color: #0d0d0d;
+  color: #ffffff;
+  font-family: 'Courier New', Courier, monospace;
+}
+
+body {
+  margin: 0;
+  display: flex;
+  justify-content: center;
+  padding: 20px;
+}
+
+/* Кастомный фокус для инпутов в стиле старых терминалов */
+input:focus, button:focus {
+  outline: 2px solid #facc15;
+}
+
+*, *:before, *:after {
+  box-sizing: border-box;
+}
