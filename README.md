@@ -1,16 +1,20 @@
-# React + Vite
+# Spendly — CLI-style Finance Tracker 📊
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Первая оптимизированная рабочая версия (MVP) персонального менеджера финансов с уникальным терминальным (CLI) интерфейсом.
 
-Currently, two official plugins are available:
+## Тек стек
+- **Frontend:** React (Vite), JavaScript (JSX)
+- **Backend / Database:** Supabase (PostgreSQL)
+- **Стилизация:** Кастомный CLI / Modern UI переключаемый интерфейс
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+## Основной функционал
+- Авторизация и регистрация пользователей (Supabase Auth) с хранением метаданных профиля.
+- Управление финансовыми периодами (установка базового лимита и дат).
+- Динамический расчет доступного бюджета на текущий день с учетом расходов и доходов.
+- Умная фильтрация транзакций (полиморфные запросы по `user_id` и `period_id`).
 
-## React Compiler
+## Локальное развертывание
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
-
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+1. Клонируйте репозиторий:
+   ```bash
+   git clone [https://github.com/Dima3939/Spendly.git](https://github.com/Dima3939/Spendly.git)
