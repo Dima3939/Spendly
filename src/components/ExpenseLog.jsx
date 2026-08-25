@@ -1,133 +1,254 @@
-import { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { DEFAULT_CATEGORIES } from '../services/StorageService';
+import { parseTxDate, isSameDay } from '../utils/dateUtils';
 
-export default function ExpenseLog({ expenses, onDelete, onEdit, theme }) {
+export default function ExpenseLog({ expenses = [], onDelete, onEdit }) {
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 5; 
+  const itemsPerPage = 7;
 
-  const isCli = theme === 'CLI';
+  // Automatically adjust page if item count changes
   const totalPages = Math.ceil(expenses.length / itemsPerPage) || 1;
-  const activePage = currentPage > totalPages ? totalPages : currentPage;
+  const activePage = Math.min(Math.max(1, currentPage), totalPages);
 
-  const indexOfLastItem = activePage * itemsPerPage;
-  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
-  const currentItems = expenses.slice(indexOfFirstItem, indexOfLastItem);
+  useEffect(() => {
+    if (currentPage > totalPages) {
+      setCurrentPage(totalPages);
+    }
+  }, [expenses.length, totalPages, currentPage]);
 
-  const accentColor = isCli ? '#facc15' : '#38bdf8';
-  const borderStyle = isCli ? '1px solid #333' : '1px solid #334155';
+  const startIndex = (activePage - 1) * itemsPerPage;
+  const visibleItems = expenses.slice(startIndex, startIndex + itemsPerPage);
+
+  // Retrieve category emoji
+  const getCategoryEmoji = (catName, isIncome) => {
+    if (isIncome) return '💰';
+    const found = DEFAULT_CATEGORIES.find(c => c.name.toLowerCase() === (catName || '').toLowerCase());
+    return found ? found.emoji : '💸';
+  };
+
+  const formatTime = (dateStr) => {
+    if (!dateStr) return '';
+    const date = parseTxDate(dateStr);
+    return date.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
+  };
+
+  const formatDate = (dateStr) => {
+    if (!dateStr) return '';
+    const date = parseTxDate(dateStr);
+    const today = new Date();
+
+    if (isSameDay(date, today)) {
+      return `Сегодня, ${formatTime(dateStr)}`;
+    }
+
+    const yesterday = new Date(today);
+    yesterday.setDate(yesterday.getDate() - 1);
+    if (isSameDay(date, yesterday)) {
+      return `Вчера, ${formatTime(dateStr)}`;
+    }
+
+    return date.toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' });
+  };
 
   return (
-    <div style={{ marginTop: '20px', borderTop: isCli ? '1px dashed #444' : '1px dashed #334155', paddingTop: '20px' }}>
-      <div style={{ fontSize: '0.9rem', color: '#888', marginBottom: '10px', letterSpacing: '1px' }}>
-        {isCli ? '[ИСТОРИЯ ОПЕРАЦИЙ]' : 'История операций'}
+    <div style={{ marginBottom: '24px' }}>
+      <div style={{
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        marginBottom: '12px',
+        padding: '0 4px'
+      }}>
+        <span style={{
+          fontSize: '0.78rem',
+          fontWeight: '700',
+          textTransform: 'uppercase',
+          letterSpacing: '0.06em',
+          color: 'var(--text-muted)'
+        }}>
+          История трат
+        </span>
+        <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+          {expenses.length} операций
+        </span>
       </div>
 
-      {currentItems.length === 0 ? (
-        <div style={{ color: '#666', fontSize: '0.85rem', fontStyle: 'italic' }}>
-          {isCli ? 'ТРАНЗАКЦИЙ ПОКА НЕТ' : 'Транзакций пока нет'}
+      {expenses.length === 0 ? (
+        <div style={{
+          background: 'var(--bg-card)',
+          borderRadius: 'var(--radius-lg)',
+          border: '1px solid var(--border-subtle)',
+          padding: '32px 20px',
+          textAlign: 'center',
+          color: 'var(--text-muted)'
+        }}>
+          <div style={{ fontSize: '2rem', marginBottom: '8px' }}>🎉</div>
+          <div style={{ fontSize: '0.95rem', fontWeight: '600', color: 'var(--text-primary)', marginBottom: '4px' }}>
+            Трат пока нет
+          </div>
+          <div style={{ fontSize: '0.8rem' }}>
+            Нажми на любую категорию выше, чтобы быстро записать расход
+          </div>
         </div>
       ) : (
         <>
-          <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: '8px' }}>
-            {currentItems.map((exp) => {
-              const isExpense = Number(exp.amount) < 0;
-              const txColor = isExpense ? (isCli ? '#ff5555' : '#f43f5e') : (isCli ? '#00ff66' : '#10b981');
-              
+          <div style={{
+            background: 'var(--bg-card)',
+            borderRadius: 'var(--radius-lg)',
+            border: '1px solid var(--border-subtle)',
+            overflow: 'hidden',
+            boxShadow: 'var(--shadow-card)',
+            marginBottom: '12px'
+          }}>
+            {visibleItems.map((tx, idx) => {
+              const isIncome = Number(tx.amount) > 0;
+              const emoji = getCategoryEmoji(tx.category, isIncome);
+              const isLast = idx === visibleItems.length - 1;
+
               return (
-                <li 
-                  key={exp.id} 
-                  style={{ 
-                    display: 'flex', 
-                    justifyContent: 'space-between', 
+                <div
+                  key={tx.id || idx}
+                  style={{
+                    display: 'flex',
                     alignItems: 'center',
-                    padding: '8px', 
-                    backgroundColor: isCli ? '#111' : '#1e293b',
-                    borderLeft: `2px solid ${txColor}`,
-                    fontSize: '0.85rem',
-                    borderRadius: isCli ? '0' : '4px'
+                    justifyContent: 'space-between',
+                    padding: '13px 16px',
+                    borderBottom: isLast ? 'none' : '1px solid var(--border-subtle)',
+                    transition: 'background 0.15s ease'
                   }}
                 >
-                  <div style={{ flex: 1, paddingRight: '10px', overflow: 'hidden' }}>
-                    <div style={{ fontWeight: 'bold', color: '#fff' }}>
-                      {isCli ? exp.category.toUpperCase() : exp.category}
+                  {/* Icon & Details */}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1, minWidth: 0 }}>
+                    <div style={{
+                      width: '38px',
+                      height: '38px',
+                      borderRadius: 'var(--radius-md)',
+                      background: isIncome ? 'var(--accent-success-bg)' : 'var(--bg-card-hover)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      fontSize: '1.25rem',
+                      flexShrink: 0
+                    }}>
+                      {emoji}
                     </div>
-                    {exp.description && (
-                      <div style={{ color: '#666', fontSize: '0.75rem', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>
-                        {exp.description}
+
+                    <div style={{ minWidth: 0, flex: 1 }}>
+                      <div style={{
+                        fontSize: '0.88rem',
+                        fontWeight: '600',
+                        color: 'var(--text-primary)',
+                        whiteSpace: 'nowrap',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis'
+                      }}>
+                        {tx.category}
                       </div>
-                    )}
+                      <div style={{
+                        fontSize: '0.74rem',
+                        color: 'var(--text-muted)',
+                        whiteSpace: 'nowrap',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis'
+                      }}>
+                        {tx.description ? `${tx.description} • ` : ''}
+                        {formatDate(tx.created_at)}
+                      </div>
+                    </div>
                   </div>
 
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                    <span style={{ color: txColor, fontWeight: 'bold', fontFamily: 'monospace' }}>
-                      {isExpense ? '' : '+'}{exp.amount} ₴
+                  {/* Amount & Delete */}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                    <span style={{
+                      fontSize: '0.92rem',
+                      fontWeight: '700',
+                      color: isIncome ? 'var(--accent-success)' : 'var(--text-primary)',
+                      letterSpacing: '-0.01em'
+                    }}>
+                      {isIncome ? '+' : '-'}{Math.abs(Number(tx.amount)).toLocaleString('ru-RU')} ₴
                     </span>
-                    
-                    {/* Кнопки управления */}
-                    <div style={{ display: 'flex', gap: '4px' }}>
-                      <button 
-                        onClick={() => onEdit(exp)}
-                        style={{ background: 'none', border: 'none', color: '#888', cursor: 'pointer', fontSize: '0.85rem', padding: '2px 4px' }}
-                        title="Редактировать"
-                      >
-                        ✏️
-                      </button>
-                      <button 
-                        onClick={() => onDelete(exp)}
-                        style={{ background: 'none', border: 'none', color: '#888', cursor: 'pointer', fontSize: '0.85rem', padding: '2px 4px' }}
-                        title="Удалить"
-                      >
-                        ❌
-                      </button>
-                    </div>
+
+                    <button
+                      onClick={() => onDelete(tx)}
+                      title="Удалить"
+                      style={{
+                        background: 'none',
+                        color: 'var(--text-muted)',
+                        padding: '4px',
+                        borderRadius: 'var(--radius-sm)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        fontSize: '0.85rem',
+                        opacity: 0.6,
+                        cursor: 'pointer'
+                      }}
+                      onMouseEnter={(e) => { e.currentTarget.style.color = 'var(--accent-danger)'; e.currentTarget.style.opacity = 1; }}
+                      onMouseLeave={(e) => { e.currentTarget.style.color = 'var(--text-muted)'; e.currentTarget.style.opacity = 0.6; }}
+                    >
+                      ✕
+                    </button>
                   </div>
-                </li>
+                </div>
               );
             })}
-          </ul>
+          </div>
 
-          {/* Пагинация */}
+          {/* Pagination (7 items per page) */}
           {totalPages > 1 && (
-            <div style={{ 
-              display: 'flex', 
-              justifyContent: 'space-between', 
-              alignItems: 'center', 
-              marginTop: '15px',
-              fontSize: '0.8rem'
+            <div style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              padding: '4px 6px',
+              gap: '10px'
             }}>
               <button
-                disabled={activePage === 1}
-                onClick={() => setCurrentPage(prev => prev - 1)}
+                disabled={activePage <= 1}
+                onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
                 style={{
-                  background: 'none',
-                  border: isCli ? ('1px solid ' + (activePage === 1 ? '#333' : '#facc15')) : ('1px solid ' + (activePage === 1 ? '#334155' : '#475569')),
-                  color: activePage === 1 ? '#444' : accentColor,
-                  cursor: activePage === 1 ? 'not-allowed' : 'pointer',
-                  fontFamily: 'inherit',
-                  padding: '4px 10px',
-                  borderRadius: isCli ? '0' : '4px'
+                  background: 'var(--bg-card)',
+                  border: '1px solid var(--border-subtle)',
+                  borderRadius: 'var(--radius-full)',
+                  padding: '6px 14px',
+                  fontSize: '0.78rem',
+                  fontWeight: '600',
+                  color: activePage <= 1 ? 'var(--text-muted)' : 'var(--text-primary)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '4px',
+                  boxShadow: '0 2px 6px rgba(0,0,0,0.1)'
                 }}
               >
-                {isCli ? '<< НАЗАД' : 'Назад'}
+                ← Назад
               </button>
 
-              <span style={{ color: '#888' }}>
-                {isCli ? `СТРАНИЦА ${activePage} ИЗ ${totalPages}` : `${activePage} / ${totalPages}`}
+              <span style={{
+                fontSize: '0.78rem',
+                fontWeight: '600',
+                color: 'var(--text-muted)'
+              }}>
+                {activePage} из {totalPages}
               </span>
 
               <button
-                disabled={activePage === totalPages}
-                onClick={() => setCurrentPage(prev => prev + 1)}
+                disabled={activePage >= totalPages}
+                onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
                 style={{
-                  background: 'none',
-                  border: isCli ? ('1px solid ' + (activePage === totalPages ? '#333' : '#facc15')) : ('1px solid ' + (activePage === totalPages ? '#334155' : '#475569')),
-                  color: activePage === totalPages ? '#444' : accentColor,
-                  cursor: activePage === totalPages ? 'not-allowed' : 'pointer',
-                  fontFamily: 'inherit',
-                  padding: '4px 10px',
-                  borderRadius: isCli ? '0' : '4px'
+                  background: 'var(--bg-card)',
+                  border: '1px solid var(--border-subtle)',
+                  borderRadius: 'var(--radius-full)',
+                  padding: '6px 14px',
+                  fontSize: '0.78rem',
+                  fontWeight: '600',
+                  color: activePage >= totalPages ? 'var(--text-muted)' : 'var(--text-primary)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '4px',
+                  boxShadow: '0 2px 6px rgba(0,0,0,0.1)'
                 }}
               >
-                {isCli ? 'ДАЛЕЕ >>' : 'Вперед'}
+                Вперед →
               </button>
             </div>
           )}

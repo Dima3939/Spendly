@@ -1,148 +1,255 @@
 import React, { useState } from 'react';
-import databaseService from '../services/SupabaseService';
 
-const PeriodSetup = ({ userId, onPeriodCreated, theme }) => {
+export default function PeriodSetup({ onPeriodCreated }) {
   const [amount, setAmount] = useState('');
   const [endDate, setEndDate] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
-  const isCli = theme === 'CLI';
+  // Quick date presets
+  const setQuickEndDate = (days) => {
+    const target = new Date();
+    target.setDate(target.getDate() + days);
+    setEndDate(target.toISOString().split('T')[0]);
+  };
 
-  const handleSubmit = async (e) => {
+  const setEndOfMonth = () => {
+    const target = new Date();
+    const lastDay = new Date(target.getFullYear(), target.getMonth() + 1, 0);
+    setEndDate(lastDay.toISOString().split('T')[0]);
+  };
+
+  const handleSubmit = (e) => {
     e.preventDefault();
-    if (!amount || !endDate) {
-      setError(isCli ? 'ОШИБКА: Заполните все поля системы.' : 'Пожалуйста, заполните все поля формы.');
+    const num = parseFloat(amount);
+    if (!num || num <= 0) {
+      setError('Укажи сумму денег на период');
+      return;
+    }
+    if (!endDate) {
+      setError('Выбери дату окончания периода');
       return;
     }
 
     setLoading(true);
-    setError('');
+    const today = new Date().toISOString().split('T')[0];
 
-    try {
-      const today = new Date().toISOString().split('T')[0];
-      
-      const newPeriod = await databaseService.createPeriod({
-        user_id: userId,
-        start_date: today,
-        end_date: endDate,
-        initial_income: parseFloat(amount)
-      });
-
-      onPeriodCreated(newPeriod);
-    } catch (err) {
-      setError(isCli ? `КРИТИЧЕСКАЯ ОШИБКА БД: ${err.message}` : `Ошибка при сохранении данных: ${err.message}`);
-    } finally {
-      setLoading(false);
-    }
+    onPeriodCreated({
+      initial_income: num,
+      start_date: today,
+      end_date: endDate
+    });
   };
 
-  return (
-    <div style={{
-      border: isCli ? '1px solid #facc15' : '1px solid #334155',
-      padding: '20px',
-      backgroundColor: isCli ? '#0a0a0a' : '#1e293b',
-      maxWidth: '400px',
-      margin: '40px auto',
-      fontFamily: 'monospace',
-      boxShadow: isCli ? '0 0 15px rgba(250, 204, 21, 0.1)' : '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
-      borderRadius: isCli ? '0' : '8px',
-      boxSizing: 'border-box'
-    }}>
-      <h3 style={{ 
-        color: isCli ? '#facc15' : '#38bdf8', 
-        textTransform: 'uppercase', 
-        marginTop: 0, 
-        textAlign: 'center',
-        fontSize: '1.05rem',
-        letterSpacing: '0.5px'
-      }}>
-        {isCli ? '[ИНИЦИАЛИЗАЦИЯ НОВОГО ПЕРИОДА]' : 'Инициализация нового периода'}
-      </h3>
-      <p style={{ color: isCli ? '#888' : '#94a3b8', fontSize: '13px', lineHeight: '1.4', textAlign: 'center' }}>
-        {isCli 
-          ? 'Система не обнаружила активных финансовых периодов для вашего аккаунта. Пожалуйста, задайте стартовые параметры.'
-          : 'Активные финансовые периоды не обнаружены. Пожалуйста, задайте стартовые параметры для начала работы.'
-        }
-      </p>
+  const minDate = new Date().toISOString().split('T')[0];
 
-      {error && <div style={{ color: '#ff5555', marginBottom: '15px', fontSize: '0.85rem', fontWeight: 'bold' }}>{error}</div>}
+  return (
+    <div className="animate-fade-in" style={{
+      background: 'var(--bg-card)',
+      borderRadius: 'var(--radius-xl)',
+      border: '1px solid var(--border-subtle)',
+      padding: '28px 20px',
+      boxShadow: 'var(--shadow-card)',
+      marginTop: '10px'
+    }}>
+      {/* Greeting Header */}
+      <div style={{ textAlign: 'center', marginBottom: '24px' }}>
+        <div style={{ fontSize: '3rem', marginBottom: '10px' }}>🎯</div>
+        <h2 style={{ fontSize: '1.4rem', fontWeight: '800', color: 'var(--text-primary)', marginBottom: '6px' }}>
+          Настроим твой бюджет
+        </h2>
+        <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', lineHeight: '1.4' }}>
+          Spendly рассчитает дневной лимит и будет ежедневно пересчитывать его под твои траты
+        </p>
+      </div>
+
+      {error && (
+        <div style={{
+          background: 'var(--accent-danger-bg)',
+          color: 'var(--accent-danger)',
+          borderRadius: 'var(--radius-md)',
+          padding: '10px 14px',
+          fontSize: '0.85rem',
+          fontWeight: '600',
+          marginBottom: '16px',
+          textAlign: 'center'
+        }}>
+          {error}
+        </div>
+      )}
 
       <form onSubmit={handleSubmit}>
-        <div style={{ marginBottom: '15px' }}>
-          <label style={{ color: isCli ? '#facc15' : '#94a3b8', display: 'block', marginBottom: '5px', fontSize: '0.8rem' }}>
-            {isCli ? 'СУММА В НАЛИЧИИ (ГРН):' : 'Сумма в наличии (₴):'}
+        {/* Step 1: Total Amount */}
+        <div style={{ marginBottom: '20px' }}>
+          <label style={{
+            display: 'block',
+            fontSize: '0.82rem',
+            fontWeight: '700',
+            color: 'var(--text-secondary)',
+            marginBottom: '8px'
+          }}>
+            1. Сколько всего денег на руках (₴ тугриков)?
           </label>
-          <input
-            type="number"
-            step="0.01"
-            value={amount}
-            onChange={(e) => setAmount(e.target.value)}
-            disabled={loading}
-            style={{
-              width: '100%',
-              backgroundColor: isCli ? '#000' : '#0f172a',
-              border: isCli ? '1px solid #444' : '1px solid #475569',
-              color: isCli ? '#facc15' : '#fff',
-              padding: '8px',
-              boxSizing: 'border-box',
-              outline: 'none',
-              fontFamily: 'monospace',
-              borderRadius: isCli ? '0' : '4px'
-            }}
-            placeholder={isCli ? "Например: 50000" : "Введите сумму"}
-          />
+          <div style={{
+            background: 'var(--bg-input)',
+            borderRadius: 'var(--radius-lg)',
+            border: '2px solid var(--border-subtle)',
+            padding: '12px 16px',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px'
+          }}>
+            <input
+              type="number"
+              step="any"
+              placeholder="Например, 30000"
+              value={amount}
+              onChange={(e) => setAmount(e.target.value)}
+              style={{
+                background: 'transparent',
+                border: 'none',
+                color: 'var(--text-primary)',
+                fontSize: '1.4rem',
+                fontWeight: '700',
+                width: '100%',
+                outline: 'none'
+              }}
+              required
+            />
+            <span style={{ fontSize: '1.2rem', fontWeight: '700', color: 'var(--accent-primary)' }}>
+              ₴
+            </span>
+          </div>
+
+          {/* Quick Amount Presets */}
+          <div style={{ display: 'flex', gap: '6px', marginTop: '8px' }}>
+            {[10000, 25000, 50000].map(val => (
+              <button
+                key={val}
+                type="button"
+                onClick={() => setAmount(val.toString())}
+                style={{
+                  background: 'var(--bg-card-hover)',
+                  border: '1px solid var(--border-subtle)',
+                  borderRadius: 'var(--radius-sm)',
+                  padding: '6px 10px',
+                  fontSize: '0.75rem',
+                  color: 'var(--text-secondary)',
+                  fontWeight: '600'
+                }}
+              >
+                {val.toLocaleString('ru-RU')} ₴
+              </button>
+            ))}
+          </div>
         </div>
 
-        <div style={{ marginBottom: '20px' }}>
-          <label style={{ color: isCli ? '#facc15' : '#94a3b8', display: 'block', marginBottom: '5px', fontSize: '0.8rem' }}>
-            {isCli ? 'ИСПОЛЬЗОВАТЬ ДО (ДАТА):' : 'Использовать до (Дата):'}
+        {/* Step 2: Target Date */}
+        <div style={{ marginBottom: '28px' }}>
+          <label style={{
+            display: 'block',
+            fontSize: '0.82rem',
+            fontWeight: '700',
+            color: 'var(--text-secondary)',
+            marginBottom: '8px'
+          }}>
+            2. До какого числа нужно растянуть?
           </label>
           <input
             type="date"
+            min={minDate}
             value={endDate}
             onChange={(e) => setEndDate(e.target.value)}
-            disabled={loading}
             style={{
               width: '100%',
-              backgroundColor: isCli ? '#000' : '#0f172a',
-              border: isCli ? '1px solid #444' : '1px solid #475569',
-              color: isCli ? '#facc15' : '#fff',
-              padding: '8px',
-              boxSizing: 'border-box',
+              background: 'var(--bg-input)',
+              border: '2px solid var(--border-subtle)',
+              borderRadius: 'var(--radius-lg)',
+              color: 'var(--text-primary)',
+              padding: '12px 16px',
+              fontSize: '1rem',
+              fontWeight: '600',
               outline: 'none',
-              fontFamily: 'monospace',
-              borderRadius: isCli ? '0' : '4px'
+              marginBottom: '8px'
             }}
-            min={new Date().toISOString().split('T')[0]}
+            required
           />
+
+          {/* Quick Date Chips */}
+          <div style={{ display: 'flex', gap: '6px' }}>
+            <button
+              type="button"
+              onClick={() => setQuickEndDate(14)}
+              style={{
+                flex: 1,
+                background: 'var(--bg-card-hover)',
+                border: '1px solid var(--border-subtle)',
+                borderRadius: 'var(--radius-sm)',
+                padding: '6px 4px',
+                fontSize: '0.75rem',
+                color: 'var(--text-secondary)',
+                fontWeight: '600'
+              }}
+            >
+              14 дней
+            </button>
+            <button
+              type="button"
+              onClick={setEndOfMonth}
+              style={{
+                flex: 1,
+                background: 'var(--bg-card-hover)',
+                border: '1px solid var(--border-subtle)',
+                borderRadius: 'var(--radius-sm)',
+                padding: '6px 4px',
+                fontSize: '0.75rem',
+                color: 'var(--text-secondary)',
+                fontWeight: '600'
+              }}
+            >
+              Конец месяца
+            </button>
+            <button
+              type="button"
+              onClick={() => setQuickEndDate(30)}
+              style={{
+                flex: 1,
+                background: 'var(--bg-card-hover)',
+                border: '1px solid var(--border-subtle)',
+                borderRadius: 'var(--radius-sm)',
+                padding: '6px 4px',
+                fontSize: '0.75rem',
+                color: 'var(--text-secondary)',
+                fontWeight: '600'
+              }}
+            >
+              30 дней
+            </button>
+          </div>
         </div>
 
+        {/* Submit */}
         <button
           type="submit"
           disabled={loading}
           style={{
             width: '100%',
-            backgroundColor: isCli ? '#facc15' : '#38bdf8',
-            color: '#000',
-            border: 'none',
-            padding: '10px',
-            fontWeight: 'bold',
-            cursor: 'pointer',
-            fontFamily: 'monospace',
-            textTransform: 'uppercase',
-            borderRadius: isCli ? '0' : '4px',
-            transition: 'background-color 0.2s'
+            background: 'linear-gradient(135deg, var(--accent-primary) 0%, #0284c7 100%)',
+            color: '#ffffff',
+            borderRadius: 'var(--radius-md)',
+            padding: '16px',
+            fontSize: '1.05rem',
+            fontWeight: '700',
+            boxShadow: 'var(--shadow-glow)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: '8px'
           }}
         >
-          {loading 
-            ? (isCli ? 'ЗАПИСЬ В СЕКТОР БД...' : 'Сохранение...') 
-            : (isCli ? 'ЗАПУСТИТЬ ПЕРИОД' : 'Начать период')
-          }
+          {loading ? 'Запуск...' : 'Начать учет 🚀'}
         </button>
       </form>
     </div>
   );
-};
-
-export default PeriodSetup;
+}

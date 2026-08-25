@@ -12,8 +12,19 @@ class SupabaseService {
     SupabaseService.instance = this;
   }
 
-  // --- МЕТОДЫ БЕЗОПАСНОСТИ (АВТОРИЗАЦИЯ) ---
+  // --- AUTHENTICATION METHODS ---
   
+  async signInWithGoogle() {
+    const { data, error } = await this._client.auth.signInWithOAuth({
+      provider: 'google',
+      options: {
+        redirectTo: window.location.origin
+      }
+    });
+    if (error) throw new Error(error.message);
+    return data;
+  }
+
   async signUp(email, password, username) {
     const { data, error } = await this._client.auth.signUp({ 
       email, 
@@ -46,7 +57,7 @@ class SupabaseService {
     return user;
   }
 
-  // --- УМНЫЙ МЕТОД ПОЛУЧЕНИЯ ТРАНЗАКЦИЙ (ФИКС ОШИБОК ТИПОВ) ---
+  // --- TRANSACTIONS ---
   async fetchTransactions(arg) {
     let query = this._client
       .from('transactions')
@@ -54,15 +65,15 @@ class SupabaseService {
       .order('created_at', { ascending: false });
 
     if (arg) {
-      // 1. Если передана строка UUID (длина 36 символов и есть дефисы), фильтруем по пользователю
+      // 1. UUID string (filter by user_id)
       if (typeof arg === 'string' && arg.length === 36 && arg.includes('-')) {
         query = query.eq('user_id', arg);
       } 
-      // 2. Если передано число или числовая строка (например, 2 или "2"), фильтруем по периоду
+      // 2. Numeric / ID (filter by period_id)
       else if (typeof arg === 'number' || (!isNaN(arg) && Number.isInteger(Number(arg)))) {
         query = query.eq('period_id', Number(arg));
       } 
-      // 3. Если случайно передали целый объект (user или period), вытаскиваем id и проверяем его
+      // 3. Object with id
       else if (typeof arg === 'object' && arg.id) {
         const id = arg.id;
         if (typeof id === 'string' && id.length === 36 && id.includes('-')) {
@@ -78,15 +89,18 @@ class SupabaseService {
     return data || [];
   }
 
-  // Алиас для обратной совместимости, если где-то вызывается fetchAllTransactions
   async fetchAllTransactions(userId) {
     return this.fetchTransactions(userId);
   }
 
   async addTransaction(transactionData) {
+    const payload = {
+      ...transactionData,
+      created_at: transactionData.created_at || new Date().toISOString()
+    };
     const { data, error } = await this._client
       .from('transactions')
-      .insert([transactionData])
+      .insert([payload])
       .select();
 
     if (error) throw new Error(error.message);
@@ -119,7 +133,7 @@ class SupabaseService {
     return data[0];
   }
 
-  // --- МЕТОДЫ ДЛЯ РАБОТЫ С КАТЕГОРИЯМИ ---
+  // --- CATEGORIES ---
 
   async fetchCategories(userId) {
     let query = this._client
@@ -146,7 +160,7 @@ class SupabaseService {
     return data[0];
   }
 
-  // --- МЕТОДЫ ДЛЯ РАБОТЫ С ПЕРИОДАМИ ---
+  // --- FINANCIAL PERIODS ---
 
   async fetchPeriods(userId) {
     let query = this._client
@@ -160,7 +174,7 @@ class SupabaseService {
 
     const { data, error } = await query;
     if (error) {
-      console.error('[ОШИБКА СУПАБЕЙЗ] Не удалось загрузить периоды:', error.message);
+      console.error('Failed to fetch periods:', error.message);
       throw new Error(error.message);
     }
     return data || [];

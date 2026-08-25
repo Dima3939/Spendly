@@ -1,443 +1,445 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
+import storageService, { DEFAULT_CATEGORIES } from './services/StorageService';
 import databaseService from './services/SupabaseService';
+import { parseTxDate, isSameDay, isBeforeDay } from './utils/dateUtils';
 
 import Dashboard from './components/Dashboard';
-import ExpenseForm from './components/ExpenseForm';
+import CategoryGrid from './components/CategoryGrid';
+import QuickExpenseModal from './components/QuickExpenseModal';
+import IncomeModal from './components/IncomeModal';
 import ExpenseLog from './components/ExpenseLog';
-import Auth from './components/Auth';
 import PeriodSetup from './components/PeriodSetup';
-import IncomeForm from './components/IncomeForm';
 import Analytics from './components/Analytics';
+import AuthModal from './components/AuthModal';
 
 export default function App() {
   const [user, setUser] = useState(null);
   const [currentPeriod, setCurrentPeriod] = useState(null);
   const [expenses, setExpenses] = useState([]);
-  const [allTransactions, setAllTransactions] = useState([]);
-  const [allPeriods, setAllPeriods] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  // Управление вкладками и стилями (CLI / MODERN)
-  const [activeTab, setActiveTab] = useState('main');
-  const [theme, setTheme] = useState('CLI');
+  // Navigation & Theme
+  const [activeTab, setActiveTab] = useState('main'); // 'main' | 'analytics'
+  const [theme, setTheme] = useState(() => localStorage.getItem('spendly_theme') || 'dark');
 
-  // Стейты для кастомных попапов
-  const [txToDelete, setTxToDelete] = useState(null);
-  const [txToEdit, setTxToEdit] = useState(null);
+  // Modals
+  const [isAuthOpen, setIsAuthOpen] = useState(false);
+  const [isIncomeOpen, setIsIncomeOpen] = useState(false);
+  const [selectedQuickCategory, setSelectedQuickCategory] = useState(null);
+  const [isQuickExpenseOpen, setIsQuickExpenseOpen] = useState(false);
 
-  // Стейты полей модалки редактирования
-  const [editAmount, setEditAmount] = useState('');
-  const [editCategory, setEditCategory] = useState('');
-  const [editDescription, setEditDescription] = useState('');
-
-  // Категории
-  const [categories, setCategories] = useState(['Продукты', 'Налоги', 'Медицина', 'Быт', 'Одежда', 'Кафе/Отдых', 'Транспорт', 'Коммуналка', 'Развлечения', 'Другое']);
-
-  // Проверка существующей сессии и загрузка данных
+  // Theme management
   useEffect(() => {
-    async function fetchData() {
-      if (!user) {
-        try {
-          const currentUser = await databaseService.getCurrentUser();
-          if (currentUser) {
-            setUser(currentUser);
-            return;
-          }
-        } catch (err) {
-          console.error("Ошибка авто-входа:", err.message);
-        }
-        setLoading(false);
-        return;
-      }
+    document.documentElement.setAttribute('data-theme', theme);
+    localStorage.setItem('spendly_theme', theme);
+  }, [theme]);
 
-      try {
-        setLoading(true);
-        // Передаем точечно user.id для фильтрации на уровне сервиса
-        const periods = await databaseService.fetchPeriods(user.id);
-        setAllPeriods(periods);
-
-        // ИСПРАВЛЕНИЕ: Вычисляем активный период по текущей дате (формат YYYY-MM-DD в локальном времени)
-        const todayStr = new Date().toLocaleDateString('en-CA');
-        const active = periods.find(p => p.start_date <= todayStr && p.end_date >= todayStr);
-
-        if (active) {
-          setCurrentPeriod(active);
-          const txs = await databaseService.fetchTransactions(active.id);
-          setExpenses(txs);
-        } else {
-          setCurrentPeriod(null);
-          setExpenses([]);
-        }
-
-        const allTxs = await databaseService.fetchAllTransactions(user.id);
-        setAllTransactions(allTxs);
-      } catch (err) {
-        alert('ОШИБКА ЗАГРУЗКИ ДАННЫХ: ' + err.message);
-      } finally {
-        setLoading(false);
-      }
-    }
-    fetchData();
-  }, [user]);
-
-  const handlePeriodCreated = async (newPeriod) => {
-    setCurrentPeriod(newPeriod);
-    setAllPeriods(prev => [newPeriod, ...prev]);
-    setExpenses([]);
+  const toggleTheme = () => {
+    setTheme(prev => (prev === 'dark' ? 'light' : 'dark'));
   };
 
-  const handleAddTransaction = async (txData) => {
+  // Load data on start & user change
+  const loadData = async (currentUser) => {
+    try {
+      setLoading(true);
+      const periods = await storageService.getPeriods(currentUser);
+
+      // Find active period for today
+      const todayStr = new Date().toLocaleDateString('en-CA');
+      const active = periods.find(p => p.start_date <= todayStr && p.end_date >= todayStr) || periods[0] || null;
+
+      if (active) {
+        setCurrentPeriod(active);
+        const txs = await storageService.getTransactions(active.id, currentUser);
+        setExpenses(txs || []);
+      } else {
+        setCurrentPeriod(null);
+        setExpenses([]);
+      }
+    } catch (err) {
+      console.error('Failed to load data:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    async function init() {
+      try {
+        const currentUser = await databaseService.getCurrentUser();
+        if (currentUser) {
+          setUser(currentUser);
+          await loadData(currentUser);
+        } else {
+          await loadData(null);
+        }
+      } catch (err) {
+        console.warn('Auto-login error:', err);
+        await loadData(null);
+      }
+    }
+    init();
+  }, []);
+
+  // Add Expense
+  const handleAddExpense = async (expenseData) => {
     if (!currentPeriod) return;
     try {
       const payload = {
-        ...txData,
-        amount: -Math.abs(Number(txData.amount)),
+        amount: -Math.abs(Number(expenseData.amount)),
+        category: expenseData.category,
+        description: expenseData.description || '',
         period_id: currentPeriod.id,
-        user_id: user.id
+        created_at: new Date().toISOString()
       };
-      const created = await databaseService.createTransaction(payload);
+      const created = await storageService.createTransaction(payload, user);
       setExpenses(prev => [created, ...prev]);
-      setAllTransactions(prev => [created, ...prev]);
     } catch (err) {
-      alert('ОШИБКА ДОБАВЛЕНИЯ РАСХОДА: ' + err.message);
+      alert('Error adding expense: ' + err.message);
     }
   };
 
+  // Add Income / Top-up
   const handleAddIncome = async (incomeData) => {
     if (!currentPeriod) return;
     try {
       const payload = {
-        ...incomeData,
         amount: Math.abs(Number(incomeData.amount)),
+        category: 'Доход',
+        description: incomeData.description || 'Пополнение бюджета',
         period_id: currentPeriod.id,
-        user_id: user.id
+        created_at: new Date().toISOString()
       };
-      const created = await databaseService.createTransaction(payload);
+      const created = await storageService.createTransaction(payload, user);
       setExpenses(prev => [created, ...prev]);
-      setAllTransactions(prev => [created, ...prev]);
     } catch (err) {
-      alert('ОШИБКА ДОБАВЛЕНИЯ ДОХОДА: ' + err.message);
+      alert('Error adding income: ' + err.message);
     }
   };
 
-  const confirmDeleteTx = async () => {
-    if (!txToDelete) return;
+  // Delete Transaction
+  const handleDeleteTx = async (tx) => {
     try {
-      await databaseService.deleteTransaction(txToDelete.id);
-      setExpenses(prev => prev.filter(t => t.id !== txToDelete.id));
-      setAllTransactions(prev => prev.filter(t => t.id !== txToDelete.id));
-      setTxToDelete(null);
+      await storageService.deleteTransaction(tx.id, user);
+      setExpenses(prev => prev.filter(t => t.id !== tx.id));
     } catch (err) {
-      alert('ОШИБКА УДАЛЕНИЯ: ' + err.message);
+      alert('Error deleting transaction: ' + err.message);
     }
   };
 
-  const openEditModal = (tx) => {
-    setTxToEdit(tx);
-    setEditAmount(Math.abs(tx.amount).toString());
-    setEditCategory(tx.category);
-    setEditDescription(tx.description || '');
-  };
-
-  const handleUpdateTx = async (e) => {
-    e.preventDefault();
-    if (!txToEdit) return;
+  // Create Period
+  const handlePeriodCreated = async (newPeriodData) => {
     try {
-      const rawAmount = Number(editAmount);
-      const finalAmount = txToEdit.amount > 0 ? Math.abs(rawAmount) : -Math.abs(rawAmount);
-
-      const updatedFields = {
-        amount: finalAmount,
-        category: editCategory,
-        description: editDescription.trim()
-      };
-
-      const updated = await databaseService.updateTransaction(txToEdit.id, updatedFields);
-
-      setExpenses(prev => prev.map(t => t.id === txToEdit.id ? updated : t));
-      setAllTransactions(prev => prev.map(t => t.id === txToEdit.id ? updated : t));
-      setTxToEdit(null);
+      const created = await storageService.createPeriod(newPeriodData, user);
+      setCurrentPeriod(created);
+      setExpenses([]);
     } catch (err) {
-      alert('ОШИБКА ОБНОВЛЕНИЯ: ' + err.message);
+      alert('Error creating period: ' + err.message);
     }
   };
 
-  // Вычисления лимитов
+  // Reset Period
+  const handleResetPeriod = () => {
+    if (confirm('Сбросить текущий период и начать новый?')) {
+      setCurrentPeriod(null);
+      setExpenses([]);
+    }
+  };
+
+  // User login and sync
+  const handleLoginSuccess = async (loggedInUser) => {
+    setUser(loggedInUser);
+    await storageService.syncGuestDataToCloud(loggedInUser);
+    await loadData(loggedInUser);
+  };
+
+  // Logout
+  const handleLogout = async () => {
+    try {
+      await databaseService.signOut();
+      setUser(null);
+      await loadData(null);
+    } catch (err) {
+      console.error('Logout error:', err);
+    }
+  };
+
+  // --- DYNAMIC BUDGET CALCULATION ---
   let salary = currentPeriod ? Number(currentPeriod.initial_income) : 0;
-  let totalSpent = expenses.filter(t => t.amount < 0).reduce((sum, t) => sum + Math.abs(Number(t.amount)), 0);
-  let totalIncomes = expenses.filter(t => t.amount > 0).reduce((sum, t) => sum + Number(t.amount), 0);
-  let currentBalance = salary + totalIncomes - totalSpent;
+  let totalSpent = expenses.filter(t => Number(t.amount) < 0).reduce((sum, t) => sum + Math.abs(Number(t.amount)), 0);
+  let totalIncomes = expenses.filter(t => Number(t.amount) > 0).reduce((sum, t) => sum + Number(t.amount), 0);
+  let currentBalance = Math.max(0, salary + totalIncomes - totalSpent);
 
-  let startDate = currentPeriod ? new Date(currentPeriod.start_date) : new Date();
-  let endDate = currentPeriod ? new Date(currentPeriod.end_date) : new Date();
+  let startDate = currentPeriod ? parseTxDate(currentPeriod.start_date) : new Date();
+  let endDate = currentPeriod ? parseTxDate(currentPeriod.end_date) : new Date();
   let today = new Date();
-  today.setHours(0, 0, 0, 0);
+
   startDate.setHours(0, 0, 0, 0);
   endDate.setHours(0, 0, 0, 0);
+  const todayMidnight = new Date(today.getFullYear(), today.getMonth(), today.getDate());
 
-  let totalDays = Math.ceil((endDate - startDate) / (1000 * 60 * 60 * 24)) + 1;
-  let daysPassed = Math.ceil((today - startDate) / (1000 * 60 * 60 * 24));
+  let totalDays = Math.max(1, Math.ceil((endDate - startDate) / (1000 * 60 * 60 * 24)) + 1);
+  let daysPassed = Math.ceil((todayMidnight - startDate) / (1000 * 60 * 60 * 24));
   if (daysPassed < 0) daysPassed = 0;
-  let daysRemaining = totalDays - daysPassed;
-  if (daysRemaining < 1) daysRemaining = 1;
+  let daysRemaining = Math.max(1, totalDays - daysPassed);
 
+  // Dynamic daily allowance (recalculated with every transaction)
+  let dynamicDailyLimit = Math.max(0, currentBalance / daysRemaining);
+
+  // Expenses prior to today
   let spentBeforeToday = expenses
-    .filter(t => {
-      if (t.amount > 0) return false;
-      const txDate = new Date(t.created_at);
-      txDate.setHours(0, 0, 0, 0);
-      return txDate < today;
-    })
+    .filter(t => Number(t.amount) < 0 && isBeforeDay(t.created_at, today))
     .reduce((sum, t) => sum + Math.abs(Number(t.amount)), 0);
 
   let incomesBeforeToday = expenses
-    .filter(t => {
-      if (t.amount <= 0) return false;
-      const txDate = new Date(t.created_at);
-      txDate.setHours(0, 0, 0, 0);
-      return txDate < today;
-    })
+    .filter(t => Number(t.amount) > 0 && isBeforeDay(t.created_at, today))
     .reduce((sum, t) => sum + Number(t.amount), 0);
 
   let balanceMorning = salary + incomesBeforeToday - spentBeforeToday;
-  let baseDailyLimit = balanceMorning / daysRemaining;
-  if (baseDailyLimit < 0) baseDailyLimit = 0;
+  let baseDailyLimit = Math.max(0, balanceMorning / daysRemaining);
 
+  // Today's expenses & incomes
   let todaySpent = expenses
-    .filter(t => {
-      if (t.amount > 0) return false;
-      const txDate = new Date(t.created_at);
-      txDate.setHours(0, 0, 0, 0);
-      return txDate.getTime() === today.getTime();
-    })
+    .filter(t => Number(t.amount) < 0 && isSameDay(t.created_at, today))
     .reduce((sum, t) => sum + Math.abs(Number(t.amount)), 0);
 
-  let todayIncomes = expenses
-    .filter(t => {
-      if (t.amount <= 0) return false;
-      const txDate = new Date(t.created_at);
-      txDate.setHours(0, 0, 0, 0);
-      return txDate.getTime() === today.getTime();
-    })
+  let todayIncomesAmount = expenses
+    .filter(t => Number(t.amount) > 0 && isSameDay(t.created_at, today))
     .reduce((sum, t) => sum + Number(t.amount), 0);
 
-  let availableToday = baseDailyLimit - todaySpent + todayIncomes;
+  let rawTodayAvailable = baseDailyLimit - todaySpent + todayIncomesAmount;
+  let isOverspent = rawTodayAvailable < 0;
+  let overspentAmount = isOverspent ? Math.abs(rawTodayAvailable) : 0;
+  
+  // Available today (resets to 0 when overspent with dynamic future redistribution)
+  let availableToday = isOverspent ? 0 : rawTodayAvailable;
+  let futureDays = Math.max(1, daysRemaining - 1);
+  let futureDailyLimit = Math.max(0, currentBalance / futureDays);
 
-  const isCli = theme === 'CLI';
-
-  // ИСПРАВЛЕНИЕ ГЕОМЕТРИИ ОКНА ЗАГРУЗКИ: Теперь оно строго повторяет ширину и центровку приложения
   if (loading) {
     return (
       <div style={{
-        width: '400px',
-        margin: '0 auto',
-        padding: '20px',
-        backgroundColor: '#000',
-        color: '#facc15',
         minHeight: '100vh',
-        fontFamily: 'monospace',
-        boxSizing: 'border-box',
         display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
         justifyContent: 'center',
-        alignItems: 'center'
+        gap: '12px'
       }}>
-        [ ЗАГРУЗКА СИСТЕМЫ... ]
+        <div style={{ fontSize: '2.5rem', animation: 'pulseGlow 1.5s infinite' }}>⚡</div>
+        <div style={{ fontSize: '0.9rem', color: 'var(--text-muted)', fontWeight: '600' }}>
+          Загрузка Spendly...
+        </div>
       </div>
     );
   }
-
-  if (!user) {
-    return (
-      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '100vh', backgroundColor: '#000' }}>
-        <Auth onLoginSuccess={(u) => setUser(u)} theme={theme} />
-      </div>
-    );
-  }
-
-  const userDisplayName =
-    user.user_metadata?.username ||
-    user.user_metadata?.full_name ||
-    user.email.split('@')[0];
 
   return (
-    <div style={{ width: '400px', margin: '0 auto', padding: '20px', backgroundColor: isCli ? '#000' : '#0f172a', color: '#fff', minHeight: '100vh', fontFamily: 'monospace', boxSizing: 'border-box' }}>
+    <>
+      {/* HEADER */}
+      <header style={{
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        marginBottom: '16px',
+        padding: '0 4px'
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <div style={{
+            width: '32px',
+            height: '32px',
+            borderRadius: '10px',
+            background: 'linear-gradient(135deg, var(--accent-primary) 0%, #0284c7 100%)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            fontSize: '1rem',
+            boxShadow: 'var(--shadow-glow)'
+          }}>
+            ⚡
+          </div>
+          <h1 style={{
+            fontSize: '1.25rem',
+            fontWeight: '800',
+            color: 'var(--text-primary)',
+            letterSpacing: '-0.02em'
+          }}>
+            Spendly
+          </h1>
+        </div>
 
-      {/* ХЕДЕР С ТУМБЛЕРОМ */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px', borderBottom: isCli ? '1px solid #333' : '1px solid #334155', paddingBottom: '10px' }}>
-        <h1 style={{ margin: 0, fontSize: '1.3rem', fontWeight: 'bold', color: isCli ? '#facc15' : '#38bdf8', letterSpacing: '1px' }}>
-          {isCli ? '★ SPENDLY ★' : 'Spendly'}
-        </h1>
-        <button
-          onClick={() => setTheme(prev => prev === 'CLI' ? 'MODERN' : 'CLI')}
-          style={{ background: 'none', border: isCli ? '1px solid #444' : '1px solid #475569', color: isCli ? '#facc15' : '#38bdf8', padding: '4px 10px', fontFamily: 'inherit', fontSize: '0.75rem', cursor: 'pointer', textTransform: 'uppercase', borderRadius: isCli ? '0' : '4px' }}
-        >
-          {theme} MODE
-        </button>
-      </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          {/* Sync indicator */}
+          <button
+            onClick={() => setIsAuthOpen(true)}
+            style={{
+              background: user ? 'var(--accent-success-bg)' : 'var(--bg-card)',
+              color: user ? 'var(--accent-success)' : 'var(--text-secondary)',
+              border: '1px solid var(--border-subtle)',
+              borderRadius: 'var(--radius-full)',
+              padding: '6px 12px',
+              fontSize: '0.78rem',
+              fontWeight: '600',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px'
+            }}
+          >
+            <span>{user ? '☁️' : '⚡'}</span>
+            <span>{user ? (user.user_metadata?.username || 'Синхронизировано') : 'Гость'}</span>
+          </button>
 
-      {/* СТАТУС БАР */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem', color: '#666', textTransform: 'uppercase', marginBottom: '20px' }}>
-        <div>STATUS: <span style={{ color: '#4ade80' }}>ONLINE</span></div>
-        <div>TERMINAL: <span style={{ color: '#aaa' }}>{isCli ? userDisplayName.toUpperCase() : userDisplayName}</span></div>
-      </div>
+          {/* Theme switcher */}
+          <button
+            onClick={toggleTheme}
+            style={{
+              width: '36px',
+              height: '36px',
+              borderRadius: 'var(--radius-full)',
+              background: 'var(--bg-card)',
+              border: '1px solid var(--border-subtle)',
+              color: 'var(--text-primary)',
+              fontSize: '1rem',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center'
+            }}
+            title={theme === 'dark' ? 'Включить светлую тему' : 'Включить тёмную тему'}
+          >
+            {theme === 'dark' ? '🌙' : '☀️'}
+          </button>
+        </div>
+      </header>
 
-      {/* ВКЛАДКИ */}
-      <div style={{ display: 'flex', gap: '5px', marginBottom: '20px' }}>
+      {/* TABS */}
+      <div style={{
+        display: 'flex',
+        background: 'var(--bg-card)',
+        borderRadius: 'var(--radius-md)',
+        padding: '4px',
+        marginBottom: '16px',
+        border: '1px solid var(--border-subtle)'
+      }}>
         <button
           onClick={() => setActiveTab('main')}
-          style={{ flex: 1, padding: '8px', fontFamily: 'inherit', fontWeight: 'bold', fontSize: '0.8rem', cursor: 'pointer', border: isCli ? '1px solid #333' : '1px solid #334155', backgroundColor: activeTab === 'main' ? (isCli ? '#facc15' : '#38bdf8') : 'transparent', color: activeTab === 'main' ? '#000' : '#888', textTransform: 'uppercase', borderRadius: isCli ? '0' : '4px' }}
+          style={{
+            flex: 1,
+            padding: '8px 0',
+            borderRadius: 'var(--radius-sm)',
+            background: activeTab === 'main' ? 'var(--accent-primary)' : 'transparent',
+            color: activeTab === 'main' ? '#ffffff' : 'var(--text-muted)',
+            fontSize: '0.85rem',
+            fontWeight: '700',
+            transition: 'all 0.2s ease'
+          }}
         >
-          {isCli ? '[ГЛАВНАЯ]' : 'Главная'}
+          Сегодня
         </button>
+
         <button
           onClick={() => setActiveTab('analytics')}
-          style={{ flex: 1, padding: '8px', fontFamily: 'inherit', fontWeight: 'bold', fontSize: '0.8rem', cursor: 'pointer', border: isCli ? '1px solid #333' : '1px solid #334155', backgroundColor: activeTab === 'analytics' ? (isCli ? '#facc15' : '#38bdf8') : 'transparent', color: activeTab === 'analytics' ? '#000' : '#888', textTransform: 'uppercase', borderRadius: isCli ? '0' : '4px' }}
-        >
-          {isCli ? '[АНАЛИТИКА]' : 'Аналитика'}
-        </button>
-        <button
-          onClick={async () => {
-            try {
-              await databaseService.signOut();
-              setUser(null);
-            } catch (err) {
-              alert('Ошибка выхода: ' + err.message);
-            }
+          style={{
+            flex: 1,
+            padding: '8px 0',
+            borderRadius: 'var(--radius-sm)',
+            background: activeTab === 'analytics' ? 'var(--accent-primary)' : 'transparent',
+            color: activeTab === 'analytics' ? '#ffffff' : 'var(--text-muted)',
+            fontSize: '0.85rem',
+            fontWeight: '700',
+            transition: 'all 0.2s ease'
           }}
-          style={{ padding: '8px 12px', fontFamily: 'inherit', fontWeight: 'bold', fontSize: '0.8rem', cursor: 'pointer', border: isCli ? '1px solid #333' : '1px solid #475569', backgroundColor: 'transparent', color: '#ff5555', textTransform: 'uppercase', borderRadius: isCli ? '0' : '4px' }}
         >
-          {isCli ? '[ВЫХОД]' : 'Выйти'}
+          Аналитика
         </button>
       </div>
 
-      {/* КОНТЕНТ ВКЛАДОК */}
+      {/* MAIN CONTENT */}
       {activeTab === 'main' ? (
         <>
           {!currentPeriod ? (
-            <PeriodSetup userId={user.id} onPeriodCreated={handlePeriodCreated} theme={theme} />
+            <PeriodSetup onPeriodCreated={handlePeriodCreated} />
           ) : (
             <>
+              {/* Daily Dashboard Card */}
               <Dashboard
                 availableToday={availableToday}
                 baseDailyLimit={baseDailyLimit}
+                dynamicDailyLimit={dynamicDailyLimit}
+                futureDailyLimit={futureDailyLimit}
                 currentBalance={currentBalance}
                 salary={salary}
                 daysRemaining={daysRemaining}
                 totalSpent={totalSpent}
                 todaySpent={todaySpent}
-                theme={theme}
+                todayIncomes={todayIncomesAmount}
+                isOverspent={isOverspent}
+                overspentAmount={overspentAmount}
+                onOpenIncome={() => setIsIncomeOpen(true)}
+                onResetPeriod={handleResetPeriod}
               />
 
-              <IncomeForm onAddIncome={handleAddIncome} theme={theme} />
-
-              <ExpenseForm
-                onAddExpense={handleAddTransaction}
-                categories={categories}
-                onAddCategory={(newCat) => setCategories(prev => [...prev, newCat])}
-                theme={theme}
+              {/* Quick Category Grid */}
+              <CategoryGrid
+                onSelectCategory={(cat) => {
+                  setSelectedQuickCategory(cat);
+                  setIsQuickExpenseOpen(true);
+                }}
+                onCustomExpense={() => {
+                  setSelectedQuickCategory(DEFAULT_CATEGORIES[0]);
+                  setIsQuickExpenseOpen(true);
+                }}
               />
 
+              {/* Expense History Feed */}
               <ExpenseLog
                 expenses={expenses}
-                onDelete={(tx) => setTxToDelete(tx)}
-                onEdit={(tx) => openEditModal(tx)}
-                theme={theme}
+                onDelete={handleDeleteTx}
               />
+
+              {/* Reset / New period action */}
+              <div style={{ textAlign: 'center', marginTop: '12px' }}>
+                <button
+                  onClick={handleResetPeriod}
+                  style={{
+                    background: 'none',
+                    color: 'var(--text-muted)',
+                    fontSize: '0.78rem',
+                    fontWeight: '500',
+                    textDecoration: 'underline',
+                    cursor: 'pointer'
+                  }}
+                >
+                  Настроить новый период / сброс
+                </button>
+              </div>
             </>
           )}
         </>
       ) : (
-        <Analytics
-          expenses={expenses}
-          allTransactions={allTransactions}
-          salary={salary}
-          allPeriods={allPeriods}
-          theme={theme}
-        />
+        <Analytics expenses={expenses} salary={salary} />
       )}
 
-      {/* МОДАЛКА УДАЛЕНИЯ */}
-      {txToDelete && (
-        <div style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', backgroundColor: 'rgba(0,0,0,0.85)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 9999 }}>
-          <div style={{ width: '340px', backgroundColor: isCli ? '#000' : '#1e293b', border: isCli ? '1px solid #ff5555' : '1px solid #f43f5e', padding: '20px', textAlign: 'center', borderRadius: isCli ? '0' : '6px' }}>
-            <p style={{ color: '#fff', fontSize: '0.9rem', marginBottom: '20px', textTransform: 'uppercase', lineHeight: '1.4' }}>
-              {isCli ? '⚠️ ПОДТВЕРДИТЕ СТЕРЕОТИПНУЮ ОПЕРАЦИЮ УДАЛЕНИЯ:' : 'Вы уверены, что хотите удалить транзакцию?'}
-              <br />
-              <span style={{ color: '#ff5555', fontWeight: 'bold' }}>{txToDelete.amount} ₴ ({txToDelete.category})</span>
-            </p>
-            <div style={{ display: 'flex', justifyContent: 'center', gap: '20px' }}>
-              <button onClick={confirmDeleteTx} style={{ backgroundColor: isCli ? '#ff5555' : '#f43f5e', color: '#fff', border: 'none', padding: '8px 20px', fontFamily: 'monospace', fontWeight: 'bold', cursor: 'pointer', borderRadius: isCli ? '0' : '4px' }}>
-                {isCli ? '[УДАЛИТЬ]' : 'Удалить'}
-              </button>
-              <button onClick={() => setTxToDelete(null)} style={{ backgroundColor: 'transparent', color: '#888', border: isCli ? '1px solid #444' : '1px solid #475569', padding: '8px 20px', fontFamily: 'monospace', cursor: 'pointer', borderRadius: isCli ? '0' : '4px' }}>
-                {isCli ? '[ОТМЕНА]' : 'Отмена'}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* MODALS */}
+      <QuickExpenseModal
+        isOpen={isQuickExpenseOpen}
+        category={selectedQuickCategory}
+        onClose={() => setIsQuickExpenseOpen(false)}
+        onSubmit={handleAddExpense}
+      />
 
-      {/* МОДАЛКА РЕДАКТИРОВАНИЯ */}
-      {txToEdit && (
-        <div style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', backgroundColor: 'rgba(0,0,0,0.85)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 9999 }}>
-          <form onSubmit={handleUpdateTx} style={{ width: '340px', backgroundColor: isCli ? '#000' : '#1e293b', border: isCli ? '1px solid #facc15' : '1px solid #38bdf8', padding: '20px', borderRadius: isCli ? '0' : '6px' }}>
-            <h3 style={{ color: isCli ? '#facc15' : '#38bdf8', marginTop: 0, fontSize: '1rem', textTransform: 'uppercase', marginBottom: '20px', textAlign: 'center' }}>
-              {isCli ? '[КОРРЕКТИРОВКА ОПЕРАЦИИ]' : 'Редактирование транзакции'}
-            </h3>
+      <IncomeModal
+        isOpen={isIncomeOpen}
+        onClose={() => setIsIncomeOpen(false)}
+        onSubmit={handleAddIncome}
+      />
 
-            <div style={{ marginBottom: '15px' }}>
-              <label style={{ color: '#888', display: 'block', marginBottom: '5px', fontSize: '0.8rem' }}>{isCli ? 'СУММА:' : 'Сумма:'}</label>
-              <input
-                type="number"
-                step="0.01"
-                value={editAmount}
-                onChange={(e) => setEditAmount(e.target.value)}
-                style={{ width: '100%', backgroundColor: isCli ? '#111' : '#0f172a', border: isCli ? '1px solid #444' : '1px solid #475569', color: '#fff', padding: '8px', boxSizing: 'border-box', outline: 'none', borderRadius: isCli ? '0' : '4px' }}
-                required
-              />
-            </div>
-
-            <div style={{ marginBottom: '15px' }}>
-              <label style={{ color: '#888', display: 'block', marginBottom: '5px', fontSize: '0.8rem' }}>{isCli ? 'КАТЕГОРИЯ:' : 'Категория:'}</label>
-              <select
-                value={editCategory}
-                onChange={(e) => setEditCategory(e.target.value)}
-                style={{ width: '100%', backgroundColor: isCli ? '#111' : '#0f172a', border: isCli ? '1px solid #444' : '1px solid #475569', color: '#fff', padding: '8px', boxSizing: 'border-box', outline: 'none', cursor: 'pointer', borderRadius: isCli ? '0' : '4px' }}
-              >
-                {txToEdit.amount > 0 ? (
-                  <option value="Доход">ДОХОД / ДОЗАПРАВКА</option>
-                ) : (
-                  categories.map(cat => (
-                    <option key={cat} value={cat}>
-                      {cat.toUpperCase()}
-                    </option>
-                  ))
-                )}
-              </select>
-            </div>
-
-            <div style={{ marginBottom: '25px' }}>
-              <label style={{ color: '#888', display: 'block', marginBottom: '5px', fontSize: '0.8rem' }}>{isCli ? 'ОПИСАНИЕ:' : 'Описание:'}</label>
-              <input
-                type="text"
-                value={editDescription}
-                onChange={(e) => setEditDescription(e.target.value)}
-                style={{ width: '100%', backgroundColor: isCli ? '#111' : '#0f172a', border: isCli ? '1px solid #444' : '1px solid #475569', color: '#fff', padding: '8px', boxSizing: 'border-box', outline: 'none', borderRadius: isCli ? '0' : '4px' }}
-              />
-            </div>
-
-            <div style={{ display: 'flex', justifyContent: 'center', gap: '20px' }}>
-              <button type="submit" style={{ backgroundColor: isCli ? '#facc15' : '#38bdf8', color: '#000', border: 'none', padding: '8px 20px', fontWeight: 'bold', cursor: 'pointer', borderRadius: isCli ? '0' : '4px' }}>
-                {isCli ? '[ПРИМЕНИТЬ]' : 'Сохранить'}
-              </button>
-              <button type="button" onClick={() => setTxToEdit(null)} style={{ backgroundColor: 'transparent', color: '#888', border: '1px solid #444', padding: '8px 20px', cursor: 'pointer', borderRadius: isCli ? '0' : '4px' }}>
-                {isCli ? '[ОТМЕНА]' : 'Отмена'}
-              </button>
-            </div>
-          </form>
-        </div>
-      )}
-
-    </div>
+      <AuthModal
+        isOpen={isAuthOpen}
+        currentUser={user}
+        onClose={() => setIsAuthOpen(false)}
+        onLoginSuccess={handleLoginSuccess}
+        onLogout={handleLogout}
+      />
+    </>
   );
 }

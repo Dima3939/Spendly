@@ -1,114 +1,158 @@
-import { useState } from 'react';
-import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell, CartesianGrid } from 'recharts';
+import React from 'react';
+import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 'recharts';
+import { DEFAULT_CATEGORIES } from '../services/StorageService';
 
-export default function Analytics({ expenses = [], allTransactions = [], salary = 0, allPeriods = [], theme }) {
-  const [scope, setScope] = useState('period');
-  const isCli = theme === 'CLI';
-
-  const activeData = scope === 'period' ? expenses : allTransactions;
-
-  const initialIncome = scope === 'period'
-    ? Number(salary || 0)
-    : allPeriods.reduce((sum, p) => sum + Number(p?.initial_income || 0), 0);
-
-  const totalIncomes = initialIncome + activeData
+export default function Analytics({ expenses = [], salary = 0 }) {
+  // Aggregate totals
+  const totalIncomes = salary + expenses
     .filter(t => t && Number(t.amount) > 0)
     .reduce((sum, t) => sum + Number(t.amount), 0);
 
-  const totalExpenses = activeData
+  const totalExpenses = expenses
     .filter(t => t && Number(t.amount) < 0)
     .reduce((sum, t) => sum + Math.abs(Number(t.amount)), 0);
 
   const saved = totalIncomes - totalExpenses;
 
-  // Группировка расходов по категориям
+  // Group expenses by category
   const categoryMap = {};
-  activeData.filter(t => t && Number(t.amount) < 0).forEach(t => {
-    categoryMap[t.category] = (categoryMap[t.category] || 0) + Math.abs(Number(t.amount));
-  });
+  expenses
+    .filter(t => t && Number(t.amount) < 0)
+    .forEach(t => {
+      const cat = t.category || 'Другое';
+      categoryMap[cat] = (categoryMap[cat] || 0) + Math.abs(Number(t.amount));
+    });
 
-  const barData = Object.keys(categoryMap).map(cat => ({
-    name: cat,
-    value: categoryMap[cat]
-  })).sort((a, b) => b.value - a.value);
+  const barData = Object.keys(categoryMap).map(catName => {
+    const found = DEFAULT_CATEGORIES.find(c => c.name.toLowerCase() === catName.toLowerCase());
+    return {
+      name: catName,
+      emoji: found ? found.emoji : '💸',
+      value: categoryMap[catName]
+    };
+  }).sort((a, b) => b.value - a.value);
 
-  // Палитра диаграммы
-  const categoryColors = isCli 
-    ? ['#facc15', '#ff5555', '#38bdf8', '#4ade80', '#c084fc', '#fb923c'] 
-    : ['#38bdf8', '#f43f5e', '#10b981', '#fbbf24', '#a78bfa', '#f97316'];
+  const palette = ['#38bdf8', '#f43f5e', '#10b981', '#fbbf24', '#a855f7', '#f97316', '#06b6d4', '#ec4899'];
 
   const CustomTooltip = ({ active, payload }) => {
     if (active && payload && payload.length) {
       return (
-        <div style={{ backgroundColor: isCli ? '#000' : '#0f172a', border: isCli ? '1px solid #333' : '1px solid #334155', padding: '8px', fontSize: '0.8rem' }}>
-          <p style={{ margin: 0, color: '#fff' }}>{`${payload[0].name.toUpperCase()} : ${payload[0].value.toFixed(2)} ₴`}</p>
+        <div style={{
+          backgroundColor: 'var(--bg-card)',
+          border: '1px solid var(--border-subtle)',
+          borderRadius: 'var(--radius-sm)',
+          padding: '8px 12px',
+          boxShadow: '0 4px 12px rgba(0,0,0,0.2)'
+        }}>
+          <p style={{ margin: 0, fontWeight: '700', color: 'var(--text-primary)', fontSize: '0.85rem' }}>
+            {payload[0].payload.emoji} {payload[0].payload.name}
+          </p>
+          <p style={{ margin: '2px 0 0 0', color: 'var(--accent-primary)', fontSize: '0.8rem', fontWeight: '600' }}>
+            {payload[0].value.toLocaleString('ru-RU')} ₴
+          </p>
         </div>
       );
     }
     return null;
   };
 
-  const borderStyle = isCli ? '1px solid #333' : '1px solid #334155';
-  const activeBtnBg = isCli ? '#facc15' : '#38bdf8';
-
   return (
-    <div>
-      {/* ПЕРЕКЛЮЧАТЕЛЬ МАСШТАБА */}
-      <div style={{ display: 'flex', gap: '5px', marginBottom: '15px' }}>
-        <button 
-          onClick={() => setScope('period')}
-          style={{ flex: 1, padding: '6px', fontFamily: 'inherit', fontSize: '0.75rem', cursor: 'pointer', border: borderStyle, backgroundColor: scope === 'period' ? activeBtnBg : 'transparent', color: scope === 'period' ? '#000' : '#888', borderRadius: isCli ? '0' : '4px' }}
-        >
-          {isCli ? '[ТЕКУЩИЙ ПЕРИОД]' : 'Текущий период'}
-        </button>
-        <button 
-          onClick={() => setScope('all')}
-          style={{ flex: 1, padding: '6px', fontFamily: 'inherit', fontSize: '0.75rem', cursor: 'pointer', border: borderStyle, backgroundColor: scope === 'all' ? activeBtnBg : 'transparent', color: scope === 'all' ? '#000' : '#888', borderRadius: isCli ? '0' : '4px' }}
-        >
-          {isCli ? '[ЗА ВСЁ ВРЕМЯ]' : 'За всё время'}
-        </button>
+    <div className="animate-fade-in" style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+      {/* Summary Cards */}
+      <div style={{
+        display: 'grid',
+        gridTemplateColumns: 'repeat(2, 1fr)',
+        gap: '10px'
+      }}>
+        <div style={{
+          background: 'var(--bg-card)',
+          borderRadius: 'var(--radius-lg)',
+          border: '1px solid var(--border-subtle)',
+          padding: '16px',
+          boxShadow: 'var(--shadow-card)'
+        }}>
+          <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: '4px' }}>
+            Всего доходов
+          </div>
+          <div style={{ fontSize: '1.2rem', fontWeight: '800', color: 'var(--accent-success)' }}>
+            +{totalIncomes.toLocaleString('ru-RU')} ₴
+          </div>
+        </div>
+
+        <div style={{
+          background: 'var(--bg-card)',
+          borderRadius: 'var(--radius-lg)',
+          border: '1px solid var(--border-subtle)',
+          padding: '16px',
+          boxShadow: 'var(--shadow-card)'
+        }}>
+          <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: '4px' }}>
+            Всего расходов
+          </div>
+          <div style={{ fontSize: '1.2rem', fontWeight: '800', color: 'var(--accent-danger)' }}>
+            -{totalExpenses.toLocaleString('ru-RU')} ₴
+          </div>
+        </div>
       </div>
 
-      {/* ФИНАНСОВЫЕ СВОДКИ */}
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '5px', backgroundColor: isCli ? '#111' : '#1e293b', padding: '12px', fontSize: '0.85rem', marginBottom: '20px', borderRadius: isCli ? '0' : '6px' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-          <span style={{ color: '#888' }}>{isCli ? 'ОБЩИЙ ВЛИЯНИЕ / ДОХОД:' : 'Всего доходов:'}</span>
-          <span style={{ color: isCli ? '#00ff66' : '#10b981', fontWeight: 'bold' }}>{totalIncomes.toFixed(2)} ₴</span>
+      {/* Net Balance Card */}
+      <div style={{
+        background: 'var(--bg-card)',
+        borderRadius: 'var(--radius-lg)',
+        border: '1px solid var(--border-subtle)',
+        padding: '16px 20px',
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center'
+      }}>
+        <div>
+          <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginBottom: '2px' }}>
+            Свободный остаток
+          </div>
+          <div style={{
+            fontSize: '1.4rem',
+            fontWeight: '800',
+            color: saved >= 0 ? 'var(--accent-success)' : 'var(--accent-danger)'
+          }}>
+            {saved.toLocaleString('ru-RU')} ₴
+          </div>
         </div>
-        <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-          <span style={{ color: '#888' }}>{isCli ? 'ОБЩИЙ СЛИВ / РАСХОД:' : 'Всего расходов:'}</span>
-          <span style={{ color: isCli ? '#ff5555' : '#f43f5e', fontWeight: 'bold' }}>{totalExpenses.toFixed(2)} ₴</span>
-        </div>
-        <div style={{ height: '1px', backgroundColor: isCli ? '#222' : '#334155', margin: '5px 0' }}></div>
-        <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-          <span style={{ color: '#888' }}>{isCli ? 'СВОБОДНЫЙ ОСТАТОК (ДЕЛЬТА):' : 'Чистый остаток:'}</span>
-          <span style={{ color: saved >= 0 ? (isCli ? '#00ff66' : '#10b981') : (isCli ? '#ff5555' : '#f43f5e'), fontWeight: 'bold' }}>
-            {saved.toFixed(2)} ₴
-          </span>
+        <div style={{ fontSize: '2rem' }}>
+          {saved >= 0 ? '💰' : '⚠️'}
         </div>
       </div>
 
-      {/* ГРАФИК РАСХОДОВ */}
-      <div style={{ border: borderStyle, padding: '15px 10px 15px 0px', backgroundColor: isCli ? '#000' : '#111827', borderRadius: isCli ? '0' : '6px' }}>
-        <div style={{ fontSize: '0.8rem', color: '#888', paddingLeft: '15px', marginBottom: '15px', letterSpacing: '0.5px' }}>
-          {isCli ? '[РАСПРЕДЕЛЕНИЕ РАСХОДОВ]' : 'Распределение расходов'}
+      {/* Category Chart */}
+      <div style={{
+        background: 'var(--bg-card)',
+        borderRadius: 'var(--radius-lg)',
+        border: '1px solid var(--border-subtle)',
+        padding: '20px 16px',
+        boxShadow: 'var(--shadow-card)'
+      }}>
+        <div style={{
+          fontSize: '0.85rem',
+          fontWeight: '700',
+          color: 'var(--text-primary)',
+          marginBottom: '16px'
+        }}>
+          Куда уходят деньги
         </div>
 
         {barData.length === 0 ? (
-          <div style={{ color: '#555', fontSize: '0.8rem', fontStyle: 'italic', textAlign: 'center', padding: '20px 0' }}>
-            {isCli ? 'НЕТ ДАННЫХ ДЛЯ МАТРИЦЫ' : 'Нет данных для анализа'}
+          <div style={{ textAlign: 'center', padding: '30px 0', color: 'var(--text-muted)', fontSize: '0.85rem' }}>
+            Нет данных для построения графика
           </div>
         ) : (
-          <div style={{ width: '100%', height: 180, fontFamily: 'monospace', fontSize: '10px' }}>
+          <div style={{ width: '100%', height: 220 }}>
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={barData} layout="vertical" margin={{ top: 0, right: 10, left: -15, bottom: 0 }}>
-                <CartesianGrid stroke={isCli ? '#151515' : '#1f2937'} strokeDasharray="3 3" horizontal={false} />
-                <XAxis type="number" stroke="#444" tick={{ fill: '#666' }} />
-                <YAxis dataKey="name" type="category" stroke="#444" tick={{ fill: '#aaa' }} width={85} />
-                <Tooltip content={<CustomTooltip />} cursor={{ fill: 'rgba(255,255,255,0.02)' }} />
-                <Bar dataKey="value" radius={isCli ? 0 : 3} barSize={10}>
+              <BarChart data={barData} layout="vertical" margin={{ top: 0, right: 16, left: 10, bottom: 0 }}>
+                <XAxis type="number" stroke="var(--text-muted)" tick={{ fill: 'var(--text-muted)', fontSize: 11 }} />
+                <YAxis dataKey="name" type="category" stroke="var(--text-muted)" tick={{ fill: 'var(--text-secondary)', fontSize: 12 }} width={75} />
+                <Tooltip content={<CustomTooltip />} cursor={{ fill: 'rgba(255,255,255,0.03)' }} />
+                <Bar dataKey="value" radius={[0, 6, 6, 0]} barSize={12}>
                   {barData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={categoryColors[index % categoryColors.length]} />
+                    <Cell key={`cell-${index}`} fill={palette[index % palette.length]} />
                   ))}
                 </Bar>
               </BarChart>
