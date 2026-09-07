@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import databaseService from '../services/SupabaseService';
 
 export default function AuthModal({
@@ -8,6 +9,7 @@ export default function AuthModal({
   onLoginSuccess,
   onLogout
 }) {
+  const { t } = useTranslation();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [username, setUsername] = useState('');
@@ -25,12 +27,12 @@ export default function AuthModal({
     try {
       if (isRegistering) {
         if (!username.trim()) {
-          setError('Введи имя или никнейм');
+          setError(t('errorNameRequired', 'Введи имя или никнейм'));
           setLoading(false);
           return;
         }
         await databaseService.signUp(email, password, username);
-        alert('Регистрация успешна! Теперь ты можешь войти.');
+        alert(t('registerSuccess', 'Регистрация успешна! Теперь ты можешь войти.'));
         setIsRegistering(false);
       } else {
         const user = await databaseService.signIn(email, password);
@@ -38,7 +40,7 @@ export default function AuthModal({
         onClose();
       }
     } catch (err) {
-      setError(err.message || 'Ошибка авторизации');
+      setError(err.message || t('errorAuth', 'Ошибка авторизации'));
     } finally {
       setLoading(false);
     }
@@ -50,7 +52,7 @@ export default function AuthModal({
       setLoading(true);
       await databaseService.signInWithGoogle();
     } catch (err) {
-      setError(err.message || 'Ошибка входа через Google');
+      setError(err.message || t('errorGoogleAuth', 'Ошибка входа через Google'));
       setLoading(false);
     }
   };
@@ -113,7 +115,7 @@ export default function AuthModal({
               {currentUser.user_metadata?.username || currentUser.email}
             </h3>
             <p style={{ fontSize: '0.8rem', color: 'var(--accent-success)', marginBottom: '24px' }}>
-              ● Облачная синхронизация активна
+              ● {t('cloudSyncActive', 'Облачная синхронизация активна')}
             </p>
 
             <button
@@ -132,7 +134,7 @@ export default function AuthModal({
                 fontWeight: '700'
               }}
             >
-              Выйти из аккаунта
+              {t('signOut')}
             </button>
           </div>
         ) : (
@@ -141,12 +143,12 @@ export default function AuthModal({
             <div style={{ textAlign: 'center', marginBottom: '20px' }}>
               <div style={{ fontSize: '2.4rem', marginBottom: '8px' }}>☁️</div>
               <h3 style={{ fontSize: '1.2rem', fontWeight: '800', color: 'var(--text-primary)', marginBottom: '4px' }}>
-                {isRegistering ? 'Создать профиль' : 'Облачная синхронизация'}
+                {isRegistering ? t('createProfile', 'Создать профиль') : t('authTitle', 'Облачная синхронизация')}
               </h3>
               <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
                 {isRegistering 
-                  ? 'Сохраняй траты и пользуйся на любом устройстве' 
-                  : 'Войди, чтобы не потерять данные бюджета'}
+                  ? t('registerDesc', 'Сохраняй траты и пользуйся на любом устройстве') 
+                  : t('authDesc')}
               </p>
             </div>
 
@@ -169,7 +171,7 @@ export default function AuthModal({
                 <div>
                   <input
                     type="text"
-                    placeholder="Твое имя или никнейм"
+                    placeholder={t('namePlaceholder', 'Твое имя или никнейм')}
                     value={username}
                     onChange={(e) => setUsername(e.target.value)}
                     style={{
@@ -190,7 +192,7 @@ export default function AuthModal({
               <div>
                 <input
                   type="email"
-                  placeholder="Email"
+                  placeholder={t('email')}
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   style={{
@@ -210,7 +212,7 @@ export default function AuthModal({
               <div>
                 <input
                   type="password"
-                  placeholder="Пароль"
+                  placeholder={t('password')}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   style={{
@@ -241,12 +243,12 @@ export default function AuthModal({
                   marginTop: '4px'
                 }}
               >
-                {loading ? 'Загрузка...' : isRegistering ? 'Зарегистрироваться' : 'Войти'}
+                {loading ? t('loading') : isRegistering ? t('signUp') : t('signIn')}
               </button>
 
               <div style={{ display: 'flex', alignItems: 'center', margin: '4px 0', gap: '8px' }}>
                 <div style={{ flex: 1, height: '1px', background: 'var(--border-subtle)' }} />
-                <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>или</span>
+                <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>{t('or', 'или')}</span>
                 <div style={{ flex: 1, height: '1px', background: 'var(--border-subtle)' }} />
               </div>
 
@@ -283,7 +285,7 @@ export default function AuthModal({
                   marginTop: '6px'
                 }}
               >
-                {isRegistering ? 'Уже есть аккаунт? Войти' : 'Нет аккаунта? Зарегистрироваться'}
+                {isRegistering ? t('haveAccount', 'Уже есть аккаунт? Войти') : t('noAccount', 'Нет аккаунта? Зарегистрироваться')}
               </button>
             </form>
           </div>

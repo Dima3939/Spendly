@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 
 export default function IncomeModal({ isOpen, onClose, onSubmit }) {
+  const { t } = useTranslation();
   const [amount, setAmount] = useState('');
   const [description, setDescription] = useState('');
   const inputRef = useRef(null);
@@ -24,8 +26,8 @@ export default function IncomeModal({ isOpen, onClose, onSubmit }) {
 
     onSubmit({
       amount: num,
-      category: 'Доход',
-      description: description.trim() || 'Пополнение бюджета'
+      category: t('incomeLabel'),
+      description: description.trim() || t('budgetTopUp')
     });
 
     onClose();
@@ -69,11 +71,8 @@ export default function IncomeModal({ isOpen, onClose, onSubmit }) {
             <span style={{ fontSize: '1.8rem' }}>💰</span>
             <div>
               <h3 style={{ fontSize: '1.1rem', fontWeight: '700', color: 'var(--text-primary)' }}>
-                Пополнение бюджета
+                {t('addIncomeTitle')}
               </h3>
-              <span style={{ fontSize: '0.75rem', color: 'var(--accent-success)' }}>
-                Увеличит остаток и дневной лимит
-              </span>
             </div>
           </div>
 
@@ -136,7 +135,7 @@ export default function IncomeModal({ isOpen, onClose, onSubmit }) {
           <div style={{ marginBottom: '20px' }}>
             <input
               type="text"
-              placeholder="Источник (аванс, фриланс, подарок...)"
+              placeholder={t('descriptionOptional')}
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               style={{
@@ -165,7 +164,7 @@ export default function IncomeModal({ isOpen, onClose, onSubmit }) {
               boxShadow: '0 4px 20px rgba(16, 185, 129, 0.35)'
             }}
           >
-            Внести доход
+            {t('add')}
           </button>
         </form>
       </div>

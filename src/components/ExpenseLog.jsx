@@ -1,8 +1,11 @@
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { DEFAULT_CATEGORIES } from '../services/StorageService';
 import { parseTxDate, isSameDay } from '../utils/dateUtils';
+import { catMap } from './CategoryGrid';
 
 export default function ExpenseLog({ expenses = [], onDelete, onEdit }) {
+  const { t } = useTranslation();
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 7;
 
@@ -38,13 +41,13 @@ export default function ExpenseLog({ expenses = [], onDelete, onEdit }) {
     const today = new Date();
 
     if (isSameDay(date, today)) {
-      return `Сегодня, ${formatTime(dateStr)}`;
+      return `${t('tabToday')}, ${formatTime(dateStr)}`;
     }
 
     const yesterday = new Date(today);
     yesterday.setDate(yesterday.getDate() - 1);
     if (isSameDay(date, yesterday)) {
-      return `Вчера, ${formatTime(dateStr)}`;
+      return `${t('yesterday', 'Вчера')}, ${formatTime(dateStr)}`;
     }
 
     return date.toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' });
@@ -66,10 +69,10 @@ export default function ExpenseLog({ expenses = [], onDelete, onEdit }) {
           letterSpacing: '0.06em',
           color: 'var(--text-muted)'
         }}>
-          История трат
+          {t('expenseHistory')}
         </span>
         <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-          {expenses.length} операций
+          {expenses.length}
         </span>
       </div>
 
@@ -84,10 +87,7 @@ export default function ExpenseLog({ expenses = [], onDelete, onEdit }) {
         }}>
           <div style={{ fontSize: '2rem', marginBottom: '8px' }}>🎉</div>
           <div style={{ fontSize: '0.95rem', fontWeight: '600', color: 'var(--text-primary)', marginBottom: '4px' }}>
-            Трат пока нет
-          </div>
-          <div style={{ fontSize: '0.8rem' }}>
-            Нажми на любую категорию выше, чтобы быстро записать расход
+            {t('noExpenses')}
           </div>
         </div>
       ) : (
@@ -142,7 +142,7 @@ export default function ExpenseLog({ expenses = [], onDelete, onEdit }) {
                         overflow: 'hidden',
                         textOverflow: 'ellipsis'
                       }}>
-                        {tx.category}
+                        {t(catMap[tx.category] || tx.category)}
                       </div>
                       <div style={{
                         fontSize: '0.74rem',
@@ -170,7 +170,7 @@ export default function ExpenseLog({ expenses = [], onDelete, onEdit }) {
 
                     <button
                       onClick={() => onDelete(tx)}
-                      title="Удалить"
+                      title={t('deleteConfirm')}
                       style={{
                         background: 'none',
                         color: 'var(--text-muted)',
@@ -220,7 +220,7 @@ export default function ExpenseLog({ expenses = [], onDelete, onEdit }) {
                   boxShadow: '0 2px 6px rgba(0,0,0,0.1)'
                 }}
               >
-                ← Назад
+                ←
               </button>
 
               <span style={{
@@ -228,7 +228,7 @@ export default function ExpenseLog({ expenses = [], onDelete, onEdit }) {
                 fontWeight: '600',
                 color: 'var(--text-muted)'
               }}>
-                {activePage} из {totalPages}
+                {t('page', { current: activePage, total: totalPages })}
               </span>
 
               <button
@@ -248,7 +248,7 @@ export default function ExpenseLog({ expenses = [], onDelete, onEdit }) {
                   boxShadow: '0 2px 6px rgba(0,0,0,0.1)'
                 }}
               >
-                Вперед →
+                →
               </button>
             </div>
           )}

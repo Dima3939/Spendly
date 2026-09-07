@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation, Trans } from 'react-i18next';
 
 export default function Dashboard({
   availableToday = 0,
@@ -15,6 +16,8 @@ export default function Dashboard({
   onOpenIncome,
   onResetPeriod
 }) {
+  const { t } = useTranslation();
+
   // Format numbers
   const formatMoney = (val) => {
     return Math.round(Number(val) || 0).toLocaleString('ru-RU');
@@ -62,7 +65,7 @@ export default function Dashboard({
           letterSpacing: '0.08em',
           color: 'var(--text-muted)'
         }}>
-          Доступно на сегодня
+          {t('availableToday')}
         </span>
 
         <button
@@ -80,7 +83,7 @@ export default function Dashboard({
             gap: '4px'
           }}
         >
-          <span>+</span> Доход
+          <span>+</span> {t('addIncome')}
         </button>
       </div>
 
@@ -113,7 +116,7 @@ export default function Dashboard({
           fontWeight: '500',
           marginLeft: '-2px'
         }}>
-          тугриков
+          {t('currencyLabel')}
         </span>
       </div>
 
@@ -135,15 +138,15 @@ export default function Dashboard({
       }}>
         {isOverspent ? (
           <span>
-            ⚠️ Лимит дня исчерпан (потрачено {formatMoney(todaySpent)} ₴). Со завтра норма: <strong>{formatMoney(futureDailyLimit)} ₴/день</strong>
+            <Trans i18nKey="limitExhausted" values={{ spent: formatMoney(todaySpent), future: formatMoney(futureDailyLimit) }} components={{ strong: <strong /> }} />
           </span>
         ) : todaySpent > 0 ? (
           <span>
-            Потрачено сегодня: {formatMoney(todaySpent)} ₴ из {formatMoney(baseDailyLimit)} ₴ 👍
+            {t('spentToday', { spent: formatMoney(todaySpent), base: formatMoney(baseDailyLimit) })}
           </span>
         ) : (
           <span>
-            Отлично, ты в плюсе! Норма дня: {formatMoney(baseDailyLimit)} ₴ 😊
+            {t('greatInPlus', { base: formatMoney(baseDailyLimit) })}
           </span>
         )}
       </div>
@@ -178,7 +181,7 @@ export default function Dashboard({
       }}>
         <div>
           <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', marginBottom: '2px' }}>
-            Норма в день
+            {t('normPerDay')}
           </div>
           <div style={{ fontSize: '0.92rem', fontWeight: '800', color: 'var(--text-primary)' }}>
             {formatMoney(dynamicDailyLimit)} ₴
@@ -187,7 +190,7 @@ export default function Dashboard({
 
         <div>
           <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', marginBottom: '2px' }}>
-            Остаток на {daysRemaining} дн.
+            {t('balanceRemaining', { days: daysRemaining })}
           </div>
           <div style={{ fontSize: '0.92rem', fontWeight: '800', color: 'var(--accent-primary)' }}>
             {formatMoney(currentBalance)} ₴
@@ -196,7 +199,7 @@ export default function Dashboard({
 
         <div style={{ textAlign: 'right' }}>
           <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', marginBottom: '2px' }}>
-            Всего бюджет
+            {t('totalBudget')}
           </div>
           <div style={{ fontSize: '0.92rem', fontWeight: '800', color: 'var(--text-secondary)' }}>
             {formatMoney(salary)} ₴

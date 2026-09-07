@@ -1,8 +1,12 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 import { DEFAULT_CATEGORIES } from '../services/StorageService';
+import { catMap } from './CategoryGrid';
 
 export default function Analytics({ expenses = [], salary = 0 }) {
+  const { t } = useTranslation();
+
   // Aggregate totals
   const totalIncomes = salary + expenses
     .filter(t => t && Number(t.amount) > 0)
@@ -17,16 +21,16 @@ export default function Analytics({ expenses = [], salary = 0 }) {
   // Group expenses by category
   const categoryMap = {};
   expenses
-    .filter(t => t && Number(t.amount) < 0)
-    .forEach(t => {
-      const cat = t.category || 'Другое';
-      categoryMap[cat] = (categoryMap[cat] || 0) + Math.abs(Number(t.amount));
+    .filter(tx => tx && Number(tx.amount) < 0)
+    .forEach(tx => {
+      const cat = tx.category || 'Другое';
+      categoryMap[cat] = (categoryMap[cat] || 0) + Math.abs(Number(tx.amount));
     });
 
   const barData = Object.keys(categoryMap).map(catName => {
     const found = DEFAULT_CATEGORIES.find(c => c.name.toLowerCase() === catName.toLowerCase());
     return {
-      name: catName,
+      name: t(catMap[catName] || catName),
       emoji: found ? found.emoji : '💸',
       value: categoryMap[catName]
     };
@@ -72,7 +76,7 @@ export default function Analytics({ expenses = [], salary = 0 }) {
           boxShadow: 'var(--shadow-card)'
         }}>
           <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: '4px' }}>
-            Всего доходов
+            {t('totalIncomes', 'Всего доходов')}
           </div>
           <div style={{ fontSize: '1.2rem', fontWeight: '800', color: 'var(--accent-success)' }}>
             +{totalIncomes.toLocaleString('ru-RU')} ₴
@@ -87,7 +91,7 @@ export default function Analytics({ expenses = [], salary = 0 }) {
           boxShadow: 'var(--shadow-card)'
         }}>
           <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: '4px' }}>
-            Всего расходов
+            {t('totalExpenses', 'Всего расходов')}
           </div>
           <div style={{ fontSize: '1.2rem', fontWeight: '800', color: 'var(--accent-danger)' }}>
             -{totalExpenses.toLocaleString('ru-RU')} ₴
@@ -107,7 +111,7 @@ export default function Analytics({ expenses = [], salary = 0 }) {
       }}>
         <div>
           <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginBottom: '2px' }}>
-            Свободный остаток
+            {t('freeBalance', 'Свободный остаток')}
           </div>
           <div style={{
             fontSize: '1.4rem',
@@ -136,12 +140,12 @@ export default function Analytics({ expenses = [], salary = 0 }) {
           color: 'var(--text-primary)',
           marginBottom: '16px'
         }}>
-          Куда уходят деньги
+          {t('whereMoneyGoes', 'Куда уходят деньги')}
         </div>
 
         {barData.length === 0 ? (
           <div style={{ textAlign: 'center', padding: '30px 0', color: 'var(--text-muted)', fontSize: '0.85rem' }}>
-            Нет данных для построения графика
+            {t('noDataChart', 'Нет данных для построения графика')}
           </div>
         ) : (
           <div style={{ width: '100%', height: 220 }}>

@@ -1,5 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 import { DEFAULT_CATEGORIES } from '../services/StorageService';
+import { catMap } from './CategoryGrid';
 
 export default function QuickExpenseModal({
   isOpen,
@@ -7,6 +9,7 @@ export default function QuickExpenseModal({
   onClose,
   onSubmit
 }) {
+  const { t } = useTranslation();
   const [amount, setAmount] = useState('');
   const [selectedCategory, setSelectedCategory] = useState(category || DEFAULT_CATEGORIES[0]);
   const [description, setDescription] = useState('');
@@ -87,10 +90,10 @@ export default function QuickExpenseModal({
             <span style={{ fontSize: '1.8rem' }}>{selectedCategory.emoji}</span>
             <div>
               <h3 style={{ fontSize: '1.1rem', fontWeight: '700', color: 'var(--text-primary)' }}>
-                {selectedCategory.name}
+                {t(catMap[selectedCategory.name] || selectedCategory.name)}
               </h3>
               <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-                Расход в ₴ тугриках
+                {t('quickExpense')} ₴ {t('currencyLabel')}
               </span>
             </div>
           </div>
@@ -184,7 +187,7 @@ export default function QuickExpenseModal({
           <div style={{ marginBottom: '20px' }}>
             <input
               type="text"
-              placeholder="Заметка (Сильпо, такси в центр, латте...)"
+              placeholder={t('descriptionOptional')}
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               style={{
@@ -218,7 +221,7 @@ export default function QuickExpenseModal({
               gap: '8px'
             }}
           >
-            Записать расход
+            {t('add')}
           </button>
         </form>
       </div>

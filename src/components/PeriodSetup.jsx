@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 export default function PeriodSetup({ onPeriodCreated }) {
+  const { t } = useTranslation();
   const [amount, setAmount] = useState('');
   const [endDate, setEndDate] = useState('');
   const [loading, setLoading] = useState(false);
@@ -23,11 +25,11 @@ export default function PeriodSetup({ onPeriodCreated }) {
     e.preventDefault();
     const num = parseFloat(amount);
     if (!num || num <= 0) {
-      setError('Укажи сумму денег на период');
+      setError(t('errorAmountRequired', 'Укажи сумму денег на период'));
       return;
     }
     if (!endDate) {
-      setError('Выбери дату окончания периода');
+      setError(t('errorDateRequired', 'Выбери дату окончания периода'));
       return;
     }
 
@@ -56,10 +58,10 @@ export default function PeriodSetup({ onPeriodCreated }) {
       <div style={{ textAlign: 'center', marginBottom: '24px' }}>
         <div style={{ fontSize: '3rem', marginBottom: '10px' }}>🎯</div>
         <h2 style={{ fontSize: '1.4rem', fontWeight: '800', color: 'var(--text-primary)', marginBottom: '6px' }}>
-          Настроим твой бюджет
+          {t('setupTitle', 'Настроим твой бюджет')}
         </h2>
         <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', lineHeight: '1.4' }}>
-          Spendly рассчитает дневной лимит и будет ежедневно пересчитывать его под твои траты
+          {t('setupDesc', 'Spendly рассчитает дневной лимит и будет ежедневно пересчитывать его под твои траты')}
         </p>
       </div>
 
@@ -88,7 +90,7 @@ export default function PeriodSetup({ onPeriodCreated }) {
             color: 'var(--text-secondary)',
             marginBottom: '8px'
           }}>
-            1. Сколько всего денег на руках (₴ тугриков)?
+            1. {t('step1Amount', 'Сколько всего денег на руках?')}
           </label>
           <div style={{
             background: 'var(--bg-input)',
@@ -102,7 +104,7 @@ export default function PeriodSetup({ onPeriodCreated }) {
             <input
               type="number"
               step="any"
-              placeholder="Например, 30000"
+              placeholder={t('exampleAmount', 'Например, 30000')}
               value={amount}
               onChange={(e) => setAmount(e.target.value)}
               style={{
@@ -153,7 +155,7 @@ export default function PeriodSetup({ onPeriodCreated }) {
             color: 'var(--text-secondary)',
             marginBottom: '8px'
           }}>
-            2. До какого числа нужно растянуть?
+            2. {t('step2Date', 'До какого числа нужно растянуть?')}
           </label>
           <input
             type="date"
@@ -191,7 +193,7 @@ export default function PeriodSetup({ onPeriodCreated }) {
                 fontWeight: '600'
               }}
             >
-              14 дней
+              14 {t('daysText', 'дней')}
             </button>
             <button
               type="button"
@@ -207,7 +209,7 @@ export default function PeriodSetup({ onPeriodCreated }) {
                 fontWeight: '600'
               }}
             >
-              Конец месяца
+              {t('endOfMonth', 'Конец месяца')}
             </button>
             <button
               type="button"
@@ -223,7 +225,7 @@ export default function PeriodSetup({ onPeriodCreated }) {
                 fontWeight: '600'
               }}
             >
-              30 дней
+              30 {t('daysText', 'дней')}
             </button>
           </div>
         </div>
@@ -247,7 +249,7 @@ export default function PeriodSetup({ onPeriodCreated }) {
             gap: '8px'
           }}
         >
-          {loading ? 'Запуск...' : 'Начать учет 🚀'}
+          {loading ? t('loading', 'Запуск...') : t('startTracking', 'Начать учет 🚀')}
         </button>
       </form>
     </div>

@@ -1,7 +1,22 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { DEFAULT_CATEGORIES } from '../services/StorageService';
 
+export const catMap = {
+  'Еда': 'catFood',
+  'Кофе': 'catCoffee',
+  'Такси': 'catTaxi',
+  'Покупки': 'catShopping',
+  'Отдых': 'catEntertainment',
+  'Здоровье': 'catHealth',
+  'Быт': 'catHome',
+  'Другое': 'catOther',
+  'Доход': 'incomeLabel'
+};
+
 export default function CategoryGrid({ onSelectCategory, onCustomExpense }) {
+  const { t } = useTranslation();
+
   return (
     <div style={{ marginBottom: '24px' }}>
       <div style={{
@@ -18,7 +33,7 @@ export default function CategoryGrid({ onSelectCategory, onCustomExpense }) {
           letterSpacing: '0.06em',
           color: 'var(--text-muted)'
         }}>
-          Быстрый расход
+          {t('quickExpense')}
         </span>
         <button
           onClick={onCustomExpense}
@@ -30,7 +45,7 @@ export default function CategoryGrid({ onSelectCategory, onCustomExpense }) {
             cursor: 'pointer'
           }}
         >
-          + Своя сумма
+          + {t('amount')}
         </button>
       </div>
 
@@ -70,9 +85,11 @@ export default function CategoryGrid({ onSelectCategory, onCustomExpense }) {
             <span style={{
               fontSize: '0.78rem',
               fontWeight: '600',
-              color: 'var(--text-secondary)'
+              color: 'var(--text-secondary)',
+              textAlign: 'center',
+              wordBreak: 'break-word'
             }}>
-              {cat.name}
+              {t(catMap[cat.name] || cat.name)}
             </span>
           </button>
         ))}

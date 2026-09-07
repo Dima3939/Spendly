@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import storageService, { DEFAULT_CATEGORIES } from './services/StorageService';
 import databaseService from './services/SupabaseService';
 import { parseTxDate, isSameDay, isBeforeDay } from './utils/dateUtils';
@@ -13,6 +14,7 @@ import Analytics from './components/Analytics';
 import AuthModal from './components/AuthModal';
 
 export default function App() {
+  const { t, i18n } = useTranslation();
   const [user, setUser] = useState(null);
   const [currentPeriod, setCurrentPeriod] = useState(null);
   const [expenses, setExpenses] = useState([]);
@@ -28,11 +30,15 @@ export default function App() {
   const [selectedQuickCategory, setSelectedQuickCategory] = useState(null);
   const [isQuickExpenseOpen, setIsQuickExpenseOpen] = useState(false);
 
-  // Theme management
+  // Theme & Direction management
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', theme);
     localStorage.setItem('spendly_theme', theme);
   }, [theme]);
+
+  useEffect(() => {
+    document.documentElement.dir = i18n.language === 'ar' ? 'rtl' : 'ltr';
+  }, [i18n.language]);
 
   const toggleTheme = () => {
     setTheme(prev => (prev === 'dark' ? 'light' : 'dark'));
@@ -105,15 +111,15 @@ export default function App() {
     try {
       const payload = {
         amount: Math.abs(Number(incomeData.amount)),
-        category: 'Доход',
-        description: incomeData.description || 'Пополнение бюджета',
+        category: t('incomeLabel'),
+        description: incomeData.description || t('budgetTopUp'),
         period_id: currentPeriod.id,
         created_at: new Date().toISOString()
       };
       const created = await storageService.createTransaction(payload, user);
       setExpenses(prev => [created, ...prev]);
     } catch (err) {
-      alert('Error adding income: ' + err.message);
+      alert(t('error', { msg: err.message }));
     }
   };
 
@@ -123,7 +129,7 @@ export default function App() {
       await storageService.deleteTransaction(tx.id, user);
       setExpenses(prev => prev.filter(t => t.id !== tx.id));
     } catch (err) {
-      alert('Error deleting transaction: ' + err.message);
+      alert(t('error', { msg: err.message }));
     }
   };
 
@@ -134,13 +140,13 @@ export default function App() {
       setCurrentPeriod(created);
       setExpenses([]);
     } catch (err) {
-      alert('Error creating period: ' + err.message);
+      alert(t('error', { msg: err.message }));
     }
   };
 
   // Reset Period
   const handleResetPeriod = () => {
-    if (confirm('Сбросить текущий период и начать новый?')) {
+    if (confirm(t('resetConfirm'))) {
       setCurrentPeriod(null);
       setExpenses([]);
     }
@@ -228,7 +234,7 @@ export default function App() {
       }}>
         <div style={{ fontSize: '2.5rem', animation: 'pulseGlow 1.5s infinite' }}>⚡</div>
         <div style={{ fontSize: '0.9rem', color: 'var(--text-muted)', fontWeight: '600' }}>
-          Загрузка Spendly...
+          {t('loading')}
         </div>
       </div>
     );
@@ -264,7 +270,7 @@ export default function App() {
             color: 'var(--text-primary)',
             letterSpacing: '-0.02em'
           }}>
-            Spendly
+            {t('appName')}
           </h1>
         </div>
 
@@ -286,8 +292,32 @@ export default function App() {
             }}
           >
             <span>{user ? '☁️' : '⚡'}</span>
-            <span>{user ? (user.user_metadata?.username || 'Синхронизировано') : 'Гость'}</span>
+            <span>{user ? (user.user_metadata?.username || t('synced')) : t('guest')}</span>
           </button>
+
+          {/* Language switcher */}
+          <select
+            value={i18n.language}
+            onChange={(e) => i18n.changeLanguage(e.target.value)}
+            style={{
+              background: 'var(--bg-card)',
+              color: 'var(--text-primary)',
+              border: '1px solid var(--border-subtle)',
+              borderRadius: 'var(--radius-md)',
+              padding: '4px 6px',
+              fontSize: '0.8rem',
+              outline: 'none',
+              cursor: 'pointer'
+            }}
+          >
+            <option value="en">EN</option>
+            <option value="ru">RU</option>
+            <option value="uk">UK</option>
+            <option value="de">DE</option>
+            <option value="es">ES</option>
+            <option value="ar">AR</option>
+            <option value="zh">ZH</option>
+          </select>
 
           {/* Theme switcher */}
           <button
@@ -304,7 +334,7 @@ export default function App() {
               alignItems: 'center',
               justifyContent: 'center'
             }}
-            title={theme === 'dark' ? 'Включить светлую тему' : 'Включить тёмную тему'}
+            title={theme === 'dark' ? t('themeLight') : t('themeDark')}
           >
             {theme === 'dark' ? '🌙' : '☀️'}
           </button>
@@ -333,7 +363,7 @@ export default function App() {
             transition: 'all 0.2s ease'
           }}
         >
-          Сегодня
+          {t('tabToday')}
         </button>
 
         <button
@@ -349,7 +379,7 @@ export default function App() {
             transition: 'all 0.2s ease'
           }}
         >
-          Аналитика
+          {t('tabAnalytics')}
         </button>
       </div>
 
@@ -409,7 +439,7 @@ export default function App() {
                     cursor: 'pointer'
                   }}
                 >
-                  Настроить новый период / сброс
+                  {t('setupNewPeriod')}
                 </button>
               </div>
             </>
