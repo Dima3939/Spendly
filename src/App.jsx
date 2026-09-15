@@ -5,6 +5,7 @@ import databaseService from './services/SupabaseService';
 import { parseTxDate, isSameDay, isBeforeDay } from './utils/dateUtils';
 
 import Dashboard from './components/Dashboard';
+import LanguageSwitcher from './components/LanguageSwitcher';
 import CategoryGrid from './components/CategoryGrid';
 import QuickExpenseModal from './components/QuickExpenseModal';
 import IncomeModal from './components/IncomeModal';
@@ -13,16 +14,30 @@ import PeriodSetup from './components/PeriodSetup';
 import Analytics from './components/Analytics';
 import AuthModal from './components/AuthModal';
 
+// Web Layout Imports
+import { Routes, Route } from 'react-router-dom';
+import { useMediaQuery } from './hooks/useMediaQuery';
+import WebLayout from './layouts/WebLayout';
+import WebOverview from './pages/WebOverview';
+import WebTransactions from './pages/WebTransactions';
+import WebPlan from './pages/WebPlan';
+import WebGoals from './pages/WebGoals';
+import WebSettings from './pages/WebSettings';
+import WebPeriodSetup from './components/WebPeriodSetup';
+
 export default function App() {
   const { t, i18n } = useTranslation();
   const [user, setUser] = useState(null);
   const [currentPeriod, setCurrentPeriod] = useState(null);
   const [expenses, setExpenses] = useState([]);
   const [loading, setLoading] = useState(true);
+  
+  const isWebLayout = useMediaQuery('(min-width: 768px)');
 
   // Navigation & Theme
   const [activeTab, setActiveTab] = useState('main'); // 'main' | 'analytics'
   const [theme, setTheme] = useState(() => localStorage.getItem('spendly_theme') || 'dark');
+  const [currency, setCurrency] = useState(() => localStorage.getItem('spendly_currency') || '₴');
 
   // Modals
   const [isAuthOpen, setIsAuthOpen] = useState(false);
@@ -34,7 +49,8 @@ export default function App() {
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', theme);
     localStorage.setItem('spendly_theme', theme);
-  }, [theme]);
+    localStorage.setItem('spendly_currency', currency);
+  }, [theme, currency]);
 
   useEffect(() => {
     document.documentElement.dir = i18n.language === 'ar' ? 'rtl' : 'ltr';
@@ -96,7 +112,7 @@ export default function App() {
         category: expenseData.category,
         description: expenseData.description || '',
         period_id: currentPeriod.id,
-        created_at: new Date().toISOString()
+        created_at: expenseData.date ? new Date(expenseData.date).toISOString() : new Date().toISOString()
       };
       const created = await storageService.createTransaction(payload, user);
       setExpenses(prev => [created, ...prev]);
@@ -111,15 +127,15 @@ export default function App() {
     try {
       const payload = {
         amount: Math.abs(Number(incomeData.amount)),
-        category: t('incomeLabel'),
+        category: incomeData.category || t('incomeLabel'),
         description: incomeData.description || t('budgetTopUp'),
         period_id: currentPeriod.id,
-        created_at: new Date().toISOString()
+        created_at: incomeData.date ? new Date(incomeData.date).toISOString() : new Date().toISOString()
       };
       const created = await storageService.createTransaction(payload, user);
       setExpenses(prev => [created, ...prev]);
     } catch (err) {
-      alert(t('error', { msg: err.message }));
+      alert('Error adding income: ' + err.message);
     }
   };
 
@@ -140,7 +156,17 @@ export default function App() {
       setCurrentPeriod(created);
       setExpenses([]);
     } catch (err) {
-      alert(t('error', { msg: err.message }));
+      alert('Error creating period: ' + err.message);
+    }
+  };
+
+  // Update Period
+  const handleUpdatePeriod = async (periodId, updatedData) => {
+    try {
+      const updated = await storageService.updatePeriod(periodId, updatedData, user);
+      setCurrentPeriod(updated);
+    } catch (err) {
+      alert('Error updating period: ' + err.message);
     }
   };
 
@@ -240,8 +266,53 @@ export default function App() {
     );
   }
 
+  if (isWebLayout) {
+    const webContext = {
+      expenses,
+      user,
+      currentPeriod,
+      availableToday,
+      baseDailyLimit,
+      dynamicDailyLimit,
+      futureDailyLimit,
+      currentBalance,
+      salary,
+      daysRemaining,
+      totalSpent,
+      todaySpent,
+      todayIncomesAmount,
+      isOverspent,
+      overspentAmount,
+      handleAddExpense,
+      handleAddIncome,
+      handleDeleteTx,
+      handleUpdatePeriod,
+      handleResetPeriod,
+      currency,
+      setCurrency,
+      setUser
+    };
+
+    return (
+      <WebLayout user={user} onLogout={handleLogout}>
+        {!currentPeriod ? (
+          <WebPeriodSetup onPeriodCreated={handlePeriodCreated} currency={currency} />
+        ) : (
+          <Routes>
+            <Route path="/" element={<WebOverview {...webContext} />} />
+            <Route path="/transactions" element={<WebTransactions {...webContext} />} />
+            <Route path="/plan" element={<WebPlan {...webContext} />} />
+            <Route path="/goals" element={<WebGoals {...webContext} />} />
+            <Route path="/settings" element={<WebSettings {...webContext} />} />
+            <Route path="*" element={<WebOverview {...webContext} />} />
+          </Routes>
+        )}
+      </WebLayout>
+    );
+  }
+
   return (
-    <>
+    <div className="mobile-wrapper">
       {/* HEADER */}
       <header style={{
         display: 'flex',
@@ -251,19 +322,16 @@ export default function App() {
         padding: '0 4px'
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <div style={{
-            width: '32px',
-            height: '32px',
-            borderRadius: '10px',
-            background: 'linear-gradient(135deg, var(--accent-primary) 0%, #0284c7 100%)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            fontSize: '1rem',
-            boxShadow: 'var(--shadow-glow)'
-          }}>
-            ⚡
-          </div>
+          <img 
+            src="/logo.jpg" 
+            alt="Spendly" 
+            style={{ 
+              width: '32px', 
+              height: '32px', 
+              borderRadius: '8px',
+              boxShadow: 'var(--shadow-glow)'
+            }} 
+          />
           <h1 style={{
             fontSize: '1.25rem',
             fontWeight: '800',
@@ -296,28 +364,7 @@ export default function App() {
           </button>
 
           {/* Language switcher */}
-          <select
-            value={i18n.language}
-            onChange={(e) => i18n.changeLanguage(e.target.value)}
-            style={{
-              background: 'var(--bg-card)',
-              color: 'var(--text-primary)',
-              border: '1px solid var(--border-subtle)',
-              borderRadius: 'var(--radius-md)',
-              padding: '4px 6px',
-              fontSize: '0.8rem',
-              outline: 'none',
-              cursor: 'pointer'
-            }}
-          >
-            <option value="en">EN</option>
-            <option value="ru">RU</option>
-            <option value="uk">UK</option>
-            <option value="de">DE</option>
-            <option value="es">ES</option>
-            <option value="ar">AR</option>
-            <option value="zh">ZH</option>
-          </select>
+          <LanguageSwitcher />
 
           {/* Theme switcher */}
           <button
@@ -392,6 +439,7 @@ export default function App() {
             <>
               {/* Daily Dashboard Card */}
               <Dashboard
+                currency={currency}
                 availableToday={availableToday}
                 baseDailyLimit={baseDailyLimit}
                 dynamicDailyLimit={dynamicDailyLimit}
@@ -422,6 +470,7 @@ export default function App() {
 
               {/* Expense History Feed */}
               <ExpenseLog
+                currency={currency}
                 expenses={expenses}
                 onDelete={handleDeleteTx}
               />
@@ -451,6 +500,7 @@ export default function App() {
 
       {/* MODALS */}
       <QuickExpenseModal
+        currency={currency}
         isOpen={isQuickExpenseOpen}
         category={selectedQuickCategory}
         onClose={() => setIsQuickExpenseOpen(false)}
@@ -470,6 +520,6 @@ export default function App() {
         onLoginSuccess={handleLoginSuccess}
         onLogout={handleLogout}
       />
-    </>
+    </div>
   );
 }

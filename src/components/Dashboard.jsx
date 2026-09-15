@@ -15,7 +15,7 @@ export default function Dashboard({
   overspentAmount = 0,
   onOpenIncome,
   onResetPeriod
-}) {
+, currency}) {
   const { t } = useTranslation();
 
   // Format numbers
@@ -116,7 +116,7 @@ export default function Dashboard({
           fontWeight: '500',
           marginLeft: '-2px'
         }}>
-          {t('currencyLabel')}
+          {currency}
         </span>
       </div>
 

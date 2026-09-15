@@ -3,15 +3,16 @@ import { useTranslation } from 'react-i18next';
 import { DEFAULT_CATEGORIES } from '../services/StorageService';
 
 export const catMap = {
-  'Еда': 'catFood',
-  'Кофе': 'catCoffee',
-  'Такси': 'catTaxi',
-  'Покупки': 'catShopping',
-  'Отдых': 'catEntertainment',
-  'Здоровье': 'catHealth',
-  'Быт': 'catHome',
-  'Другое': 'catOther',
-  'Доход': 'incomeLabel'
+  'Food': 'catFood',
+  'Coffee': 'catCoffee',
+  'Taxi': 'catTaxi',
+  'Shopping': 'catShopping',
+  'Entertainment': 'catEntertainment',
+  'Health': 'catHealth',
+  'Home': 'catHome',
+  'Other': 'catOther',
+  'Taxes': 'catTaxes',
+  'Income': 'incomeLabel'
 };
 
 export default function CategoryGrid({ onSelectCategory, onCustomExpense }) {

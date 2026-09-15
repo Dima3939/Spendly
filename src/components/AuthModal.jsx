@@ -234,7 +234,7 @@ export default function AuthModal({
                 disabled={loading}
                 style={{
                   width: '100%',
-                  background: 'linear-gradient(135deg, var(--accent-primary) 0%, #0284c7 100%)',
+                  background: 'linear-gradient(135deg, var(--accent-primary) 0%, var(--accent-success) 100%)',
                   color: '#ffffff',
                   borderRadius: 'var(--radius-md)',
                   padding: '14px',

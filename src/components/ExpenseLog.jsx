@@ -4,7 +4,7 @@ import { DEFAULT_CATEGORIES } from '../services/StorageService';
 import { parseTxDate, isSameDay } from '../utils/dateUtils';
 import { catMap } from './CategoryGrid';
 
-export default function ExpenseLog({ expenses = [], onDelete, onEdit }) {
+export default function ExpenseLog({ currency, expenses = [], onDelete, onEdit }) {
   const { t } = useTranslation();
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 7;
@@ -165,7 +165,7 @@ export default function ExpenseLog({ expenses = [], onDelete, onEdit }) {
                       color: isIncome ? 'var(--accent-success)' : 'var(--text-primary)',
                       letterSpacing: '-0.01em'
                     }}>
-                      {isIncome ? '+' : '-'}{Math.abs(Number(tx.amount)).toLocaleString('ru-RU')} ₴
+                      {isIncome ? '+' : '-'}{Math.abs(Number(tx.amount)).toLocaleString('ru-RU')} {currency}
                     </span>
 
                     <button

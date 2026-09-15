@@ -5,14 +5,15 @@ const LOCAL_TX_KEY = 'spendly_guest_transactions';
 const LOCAL_CATEGORIES_KEY = 'spendly_guest_categories';
 
 export const DEFAULT_CATEGORIES = [
-  { id: 'cat-1', name: 'Еда', emoji: '🍔', color: '#f97316' },
-  { id: 'cat-2', name: 'Кофе', emoji: '☕', color: '#d97706' },
-  { id: 'cat-3', name: 'Такси', emoji: '🚕', color: '#eab308' },
-  { id: 'cat-4', name: 'Покупки', emoji: '🛒', color: '#06b6d4' },
-  { id: 'cat-5', name: 'Отдых', emoji: '🎮', color: '#8b5cf6' },
-  { id: 'cat-6', name: 'Здоровье', emoji: '💊', color: '#ec4899' },
-  { id: 'cat-7', name: 'Быт', emoji: '🏠', color: '#10b981' },
-  { id: 'cat-8', name: 'Другое', emoji: '📦', color: '#64748b' },
+  { id: 'cat-1', name: 'Food', emoji: '🍔', color: '#f97316' },
+  { id: 'cat-2', name: 'Coffee', emoji: '☕', color: '#d97706' },
+  { id: 'cat-3', name: 'Taxi', emoji: '🚕', color: '#eab308' },
+  { id: 'cat-4', name: 'Shopping', emoji: '🛍️', color: '#06b6d4' },
+  { id: 'cat-5', name: 'Entertainment', emoji: '🍿', color: '#8b5cf6' },
+  { id: 'cat-6', name: 'Health', emoji: '💊', color: '#ec4899' },
+  { id: 'cat-7', name: 'Home', emoji: '🏠', color: '#10b981' },
+  { id: 'cat-8', name: 'Other', emoji: '📦', color: '#64748b' },
+  { id: 'cat-9', name: 'Taxes', emoji: '💸', color: '#f43f5e' }
 ];
 
 class StorageService {
@@ -59,6 +60,37 @@ class StorageService {
     const updated = [newPeriod, ...existing];
     localStorage.setItem(LOCAL_PERIOD_KEY, JSON.stringify(updated));
     return newPeriod;
+  }
+
+  async updatePeriod(periodId, periodData, user = null) {
+    if (user && user.id) {
+      try {
+        const payload = {};
+        if (periodData.start_date) payload.start_date = periodData.start_date;
+        if (periodData.end_date) payload.end_date = periodData.end_date;
+        if (periodData.initial_income !== undefined) payload.initial_income = parseFloat(periodData.initial_income);
+        
+        return await databaseService.updatePeriod(periodId, payload);
+      } catch (err) {
+        console.error('Failed to update period in Supabase:', err.message);
+        throw err;
+      }
+    }
+
+    // Guest Mode (localStorage)
+    const existing = await this.getPeriods();
+    const index = existing.findIndex(p => p.id === periodId);
+    if (index === -1) throw new Error('Period not found');
+
+    const updatedPeriod = {
+      ...existing[index],
+      ...periodData,
+      initial_income: periodData.initial_income !== undefined ? parseFloat(periodData.initial_income) : existing[index].initial_income
+    };
+    
+    existing[index] = updatedPeriod;
+    localStorage.setItem(LOCAL_PERIOD_KEY, JSON.stringify(existing));
+    return updatedPeriod;
   }
 
   // --- TRANSACTIONS ---

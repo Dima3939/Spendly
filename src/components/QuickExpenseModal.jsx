@@ -8,7 +8,7 @@ export default function QuickExpenseModal({
   category,
   onClose,
   onSubmit
-}) {
+, currency}) {
   const { t } = useTranslation();
   const [amount, setAmount] = useState('');
   const [selectedCategory, setSelectedCategory] = useState(category || DEFAULT_CATEGORIES[0]);
@@ -93,7 +93,7 @@ export default function QuickExpenseModal({
                 {t(catMap[selectedCategory.name] || selectedCategory.name)}
               </h3>
               <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-                {t('quickExpense')} ₴ {t('currencyLabel')}
+                {t('quickExpense')} ₴ {currency}
               </span>
             </div>
           </div>

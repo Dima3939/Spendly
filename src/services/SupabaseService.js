@@ -57,6 +57,14 @@ class SupabaseService {
     return user;
   }
 
+  async updateUserMetadata(metaData) {
+    const { data: { user }, error } = await this._client.auth.updateUser({
+      data: metaData
+    });
+    if (error) throw new Error(error.message);
+    return user;
+  }
+
   // --- TRANSACTIONS ---
   async fetchTransactions(arg) {
     let query = this._client

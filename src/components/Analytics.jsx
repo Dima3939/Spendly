@@ -36,7 +36,7 @@ export default function Analytics({ expenses = [], salary = 0 }) {
     };
   }).sort((a, b) => b.value - a.value);
 
-  const palette = ['#38bdf8', '#f43f5e', '#10b981', '#fbbf24', '#a855f7', '#f97316', '#06b6d4', '#ec4899'];
+  const palette = ['var(--accent-primary)', '#f43f5e', '#10b981', '#fbbf24', '#a855f7', '#f97316', '#06b6d4', '#ec4899'];
 
   const CustomTooltip = ({ active, payload }) => {
     if (active && payload && payload.length) {
