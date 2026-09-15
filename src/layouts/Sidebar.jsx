@@ -36,7 +36,7 @@ export default function Sidebar({ user, onLogout }) {
           {/* Brand */}
       <div style={{ padding: '0 24px', marginBottom: '40px', display: 'flex', alignItems: 'center', gap: '12px' }}>
         <img 
-          src="/logo.jpg" 
+          src="/logo.svg" 
           alt="Spendly" 
           style={{ 
             width: '32px', 

@@ -343,7 +343,7 @@ export default function App() {
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
           <img 
-            src="/logo.jpg" 
+            src="/logo.svg" 
             alt="Spendly" 
             style={{ 
               width: '32px', 
