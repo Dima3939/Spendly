@@ -317,7 +317,7 @@ export default function App() {
     return (
       <WebLayout user={user} onLogout={handleLogout} isPro={isPro}>
         {!currentPeriod ? (
-          <WebPeriodSetup onPeriodCreated={handlePeriodCreated} currency={currency} />
+          <WebPeriodSetup onPeriodCreated={handlePeriodCreated} currency={currency} setCurrency={setCurrency} />
         ) : (
           <Routes>
             <Route path="/" element={<WebOverview {...webContext} />} />
@@ -457,7 +457,7 @@ export default function App() {
       {activeTab === 'main' ? (
         <>
           {!currentPeriod ? (
-            <PeriodSetup onPeriodCreated={handlePeriodCreated} />
+            <PeriodSetup onPeriodCreated={handlePeriodCreated} currency={currency} setCurrency={setCurrency} />
           ) : (
             <>
               {/* Daily Dashboard Card */}

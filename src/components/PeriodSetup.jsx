@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
-export default function PeriodSetup({ onPeriodCreated }) {
+export default function PeriodSetup({ onPeriodCreated, currency, setCurrency }) {
   const { t } = useTranslation();
   const [amount, setAmount] = useState('');
   const [endDate, setEndDate] = useState('');
@@ -140,7 +140,7 @@ export default function PeriodSetup({ onPeriodCreated }) {
                   fontWeight: '600'
                 }}
               >
-                {val.toLocaleString('ru-RU')} ₴
+                {val.toLocaleString('ru-RU')} {currency}
               </button>
             ))}
           </div>
