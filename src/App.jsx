@@ -309,7 +309,9 @@ export default function App() {
       handleResetPeriod,
       currency,
       setCurrency,
-      setUser
+      setUser,
+      isPro,
+      upgradeToPro
     };
 
     return (
