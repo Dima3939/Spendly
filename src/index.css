@@ -15,7 +15,7 @@
   --text-muted: #647d6e;
   
   --border-subtle: rgba(21, 214, 119, 0.15);
-  --border-focus: #15d677;
+  --border-focus: var(--accent-primary);
   
   --accent-primary: #16eb7b;
   --accent-primary-glow: rgba(21, 214, 119, 0.4);
@@ -185,4 +185,31 @@ input, select {
 
 .table-row:hover {
   background: var(--bg-card-hover);
+}
+
+:root {
+  --accent-rgb: 21, 214, 119;
+  --accent-success-rgb: 11, 168, 89;
+}
+
+[data-theme="cyberblue"] {
+  --accent-rgb: 0, 229, 255;
+  --accent-success-rgb: 0, 179, 204;
+}
+
+[data-theme="amethyst"] {
+  --accent-rgb: 176, 38, 255;
+  --accent-success-rgb: 138, 30, 204;
+}
+
+[data-theme="gold"] {
+  --accent-rgb: 255, 204, 0;
+  --accent-success-rgb: 204, 153, 0;
+}
+
+:root, [data-theme] {
+  --accent-primary: rgb(var(--accent-rgb));
+  --accent-success: rgb(var(--accent-success-rgb));
+  --border-focus: rgb(var(--accent-rgb));
+  --shadow-glow: 0 0 15px rgba(var(--accent-rgb), 0.2);
 }

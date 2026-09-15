@@ -1,3 +1,4 @@
+import { parseSmartInput } from '../utils/smartParser';
 import React, { useState, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { DEFAULT_CATEGORIES } from '../services/StorageService';
@@ -13,6 +14,7 @@ export default function QuickExpenseModal({
   const [amount, setAmount] = useState('');
   const [selectedCategory, setSelectedCategory] = useState(category || DEFAULT_CATEGORIES[0]);
   const [description, setDescription] = useState('');
+  const [smartInput, setSmartInput] = useState('');
   const inputRef = useRef(null);
 
   useEffect(() => {
@@ -24,7 +26,9 @@ export default function QuickExpenseModal({
   useEffect(() => {
     if (isOpen) {
       setAmount('');
+    setSmartInput('');
       setDescription('');
+    setSmartInput('');
       setTimeout(() => {
         if (inputRef.current) inputRef.current.focus();
       }, 100);
@@ -36,6 +40,19 @@ export default function QuickExpenseModal({
   const handleQuickAdd = (delta) => {
     const current = Number(amount) || 0;
     setAmount((current + delta).toString());
+  };
+
+  
+  const handleSmartInputChange = (e) => {
+    const val = e.target.value;
+    setSmartInput(val);
+    
+    if (val.length > 2) {
+      const parsed = parseSmartInput(val);
+      if (parsed.amount) setAmount(parsed.amount);
+      if (parsed.category) setCategory(parsed.category);
+      if (parsed.description) setDescription(parsed.description);
+    }
   };
 
   const handleSubmit = (e) => {

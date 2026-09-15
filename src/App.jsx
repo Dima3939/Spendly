@@ -1,3 +1,4 @@
+import { playSuccessSound, triggerHaptic } from './utils/audioEffects';
 import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import storageService, { DEFAULT_CATEGORIES } from './services/StorageService';
@@ -24,6 +25,7 @@ import WebTransactions from './pages/WebTransactions';
 import WebPlan from './pages/WebPlan';
 import WebGoals from './pages/WebGoals';
 import WebSettings from './pages/WebSettings';
+import WebSubscriptions from './pages/WebSubscriptions';
 import WebPeriodSetup from './components/WebPeriodSetup';
 
 export default function App() {
@@ -40,6 +42,12 @@ export default function App() {
   const [activeTab, setActiveTab] = useState('main'); // 'main' | 'analytics'
   const [theme, setTheme] = useState(() => localStorage.getItem('spendly_theme') || 'dark');
   const [currency, setCurrency] = useState(() => localStorage.getItem('spendly_currency') || '₴');
+  const [soundEnabled, setSoundEnabled] = useState(() => localStorage.getItem('spendly_sound') !== 'false');
+  const [accentTheme, setAccentTheme] = useState(() => localStorage.getItem('spendly_theme_color') || 'emerald');
+  
+  useEffect(() => {
+    document.documentElement.setAttribute('data-theme', accentTheme);
+  }, [accentTheme]);
 
   // Modals
   const [isAuthOpen, setIsAuthOpen] = useState(false);
@@ -85,7 +93,44 @@ export default function App() {
       setIsPro(currentUser?.user_metadata?.is_pro === true || localStorage.getItem('spendly_is_pro') === 'true');
       const periods = await storageService.getPeriods(currentUser);
 
-      // Find active period for today
+      
+      // Process subscriptions
+      try {
+        const subs = await storageService.getSubscriptions(currentUser);
+        const todayD = new Date();
+        const todayStr = todayD.toISOString().split('T')[0];
+        
+        for (const sub of subs) {
+          if (sub.next_billing_date <= todayStr) {
+            // Charge it if there is an active period that covers today
+            const activeNow = periods.find(p => p.start_date <= todayStr && p.end_date >= todayStr);
+            if (activeNow) {
+              const payload = {
+                amount: -Math.abs(Number(sub.amount)),
+                category: sub.category || 'Subscriptions',
+                description: sub.title + ' (Auto-charged)',
+                period_id: activeNow.id,
+                created_at: todayD.toISOString()
+              };
+              await storageService.createTransaction(payload, currentUser);
+              
+              // Increment next_billing_date
+              const nextD = new Date(sub.next_billing_date);
+              if (sub.billing_cycle === 'yearly') {
+                nextD.setFullYear(nextD.getFullYear() + 1);
+              } else {
+                nextD.setMonth(nextD.getMonth() + 1);
+              }
+              await storageService.updateSubscription(sub.id, { next_billing_date: nextD.toISOString().split('T')[0] }, currentUser);
+            }
+          }
+        }
+      } catch (err) {
+        console.warn('Failed to process subscriptions:', err);
+      }
+
+
+        // Find active period for today
       const todayStr = new Date().toLocaleDateString('en-CA');
       const active = periods.find(p => p.start_date <= todayStr && p.end_date >= todayStr) || periods[0] || null;
 
@@ -344,7 +389,11 @@ export default function App() {
       setCurrency,
       setUser,
       isPro,
-      upgradeToPro
+      upgradeToPro,
+      soundEnabled,
+      setSoundEnabled,
+      accentTheme,
+      setAccentTheme
     };
 
     return (
@@ -358,6 +407,7 @@ export default function App() {
             <Route path="/plan" element={<WebPlan {...webContext} />} />
             <Route path="/goals" element={<WebGoals {...webContext} />} />
             <Route path="/settings" element={<WebSettings {...webContext} />} />
+              <Route path="/subscriptions" element={<WebSubscriptions {...webContext} />} />
               <Route path="/pro" element={<WebProAnalytics {...webContext} />} />
             <Route path="*" element={<WebOverview {...webContext} />} />
           </Routes>

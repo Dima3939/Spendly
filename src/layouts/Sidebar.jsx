@@ -7,8 +7,9 @@ import {
   CalendarDays, 
   Target, 
   Settings, 
-  LogOut 
-, Sparkles} from 'lucide-react';
+  LogOut, 
+  Repeat, 
+  Sparkles} from 'lucide-react';
 
 export default function Sidebar({ user, onLogout }) {
   const { t } = useTranslation();

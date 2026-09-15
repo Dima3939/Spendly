@@ -4,6 +4,45 @@ const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
 const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
 class SupabaseService {
+
+  // SUBSCRIPTIONS
+  async fetchSubscriptions(userId) {
+    const { data, error } = await supabase
+      .from('subscriptions')
+      .select('*')
+      .eq('user_id', userId)
+      .order('next_billing_date', { ascending: true });
+    if (error) throw error;
+    return data;
+  }
+  async createSubscription(subData) {
+    const { data, error } = await supabase
+      .from('subscriptions')
+      .insert([subData])
+      .select()
+      .single();
+    if (error) throw error;
+    return data;
+  }
+  async updateSubscription(subId, updates) {
+    const { data, error } = await supabase
+      .from('subscriptions')
+      .update(updates)
+      .eq('id', subId)
+      .select()
+      .single();
+    if (error) throw error;
+    return data;
+  }
+  async deleteSubscription(subId) {
+    const { error } = await supabase
+      .from('subscriptions')
+      .delete()
+      .eq('id', subId);
+    if (error) throw error;
+    return true;
+  }
+
   constructor() {
     if (SupabaseService.instance) {
       return SupabaseService.instance;
