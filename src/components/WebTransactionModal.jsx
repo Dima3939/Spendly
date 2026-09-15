@@ -1,3 +1,4 @@
+import { parseSmartInput } from '../utils/smartParser';
 import React, { useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
@@ -8,6 +9,7 @@ export default function WebTransactionModal({ isOpen, onClose, onAddExpense, onA
   const { t } = useTranslation();
   
   const [type, setType] = useState('expense');
+  const [smartInput, setSmartInput] = useState('');
   const [amount, setAmount] = useState('');
   const [category, setCategory] = useState(DEFAULT_CATEGORIES[0]?.name || 'Other');
   const [title, setTitle] = useState('');
@@ -15,6 +17,19 @@ export default function WebTransactionModal({ isOpen, onClose, onAddExpense, onA
   const [tags, setTags] = useState('');
   
   if (!isOpen) return null;
+
+  
+  const handleSmartInputChange = (e) => {
+    const val = e.target.value;
+    setSmartInput(val);
+    
+    if (val.length > 2) {
+      const parsed = parseSmartInput(val);
+      if (parsed.amount) setAmount(parsed.amount);
+      if (parsed.category) setCategory(parsed.category);
+      if (parsed.description) setTitle(parsed.description); // Web uses 'title' for description/merchant
+    }
+  };
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -38,6 +53,7 @@ export default function WebTransactionModal({ isOpen, onClose, onAddExpense, onA
     
     setAmount('');
     setTitle('');
+    setSmartInput('');
     setTags('');
     setDate(new Date().toISOString().split('T')[0]);
     onClose();
@@ -101,6 +117,34 @@ export default function WebTransactionModal({ isOpen, onClose, onAddExpense, onA
 
         <form onSubmit={handleSubmit} style={{ padding: '24px' }}>
           
+          
+          {/* AI Smart Input */}
+          <div style={{ marginBottom: '24px', background: 'linear-gradient(135deg, rgba(21, 214, 119, 0.1) 0%, transparent 100%)', padding: '16px', borderRadius: 'var(--radius-lg)', border: '1px solid var(--border-subtle)' }}>
+            <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.9rem', fontWeight: '700', color: 'var(--accent-primary)', marginBottom: '12px' }}>
+              <span style={{ fontSize: '1.2rem' }}>🤖</span> Smart Input
+            </label>
+            <input 
+              type="text" 
+              placeholder="e.g. Taxi 15, Coffee 5..."
+              value={smartInput}
+              onChange={handleSmartInputChange}
+              style={{
+                width: '100%',
+                background: 'var(--bg-card)',
+                border: '1px solid var(--border-subtle)',
+                borderRadius: 'var(--radius-md)',
+                color: 'var(--text-primary)',
+                padding: '12px 16px',
+                fontSize: '1rem',
+                outline: 'none',
+                boxShadow: 'inset 0 2px 4px rgba(0,0,0,0.2)'
+              }}
+            />
+            <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: '8px' }}>
+              Type your expense naturally. We'll fill the form below automatically!
+            </div>
+          </div>
+
           {/* Scan Receipt Placeholder */}
           <div style={{
             border: '1px dashed var(--accent-success)',

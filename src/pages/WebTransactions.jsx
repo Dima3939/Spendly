@@ -1,3 +1,4 @@
+import { exportTransactionsToCSV } from '../utils/exportCsv';
 import React, { useState, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import i18n from '../i18n';
@@ -136,20 +137,10 @@ export default function WebTransactions({ expenses = [], currentPeriod, handleAd
             <option value="income">Income Only</option>
           </select>
 
-          <button style={{
-            background: 'var(--bg-card)',
-            border: '1px solid var(--border-subtle)',
-            color: 'var(--text-primary)',
-            padding: '12px 16px',
-            borderRadius: 'var(--radius-md)',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '8px',
-            fontWeight: '500'
-          }}>
-            <ArrowDownToLine size={18} />
-            Export CSV
-          </button>
+          <button onClick={() => { if (isPro) { exportTransactionsToCSV(expenses, currency); } else { upgradeToPro(); } }} style={{ background: 'var(--bg-input)', border: '1px solid var(--border-subtle)', color: 'var(--text-primary)', padding: '10px 16px', borderRadius: 'var(--radius-sm)', display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontWeight: '500' }}>
+              <ArrowDownToLine size={18} />
+              Export CSV {!isPro && <span style={{ fontSize: '0.65rem', background: 'var(--accent-primary)', color: '#000', padding: '2px 6px', borderRadius: '4px', fontWeight: '800' }}>PRO</span>}
+            </button>
         </div>
       </div>
 

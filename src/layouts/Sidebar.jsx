@@ -18,6 +18,7 @@ export default function Sidebar({ user, onLogout }) {
     { to: '/transactions', icon: <ArrowLeftRight size={20} />, label: t('navTransactions') },
     { to: '/plan', icon: <CalendarDays size={20} />, label: t('navMonthlyPlan') },
     { to: '/goals', icon: <Target size={20} />, label: t('navGoals') },
+      { to: '/subscriptions', icon: <Repeat size={20} />, label: 'Subscriptions' },
     { to: '/settings', icon: <Settings size={20} />, label: t('navSettings') },
   ];
 
