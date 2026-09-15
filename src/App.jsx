@@ -19,6 +19,7 @@ import { Routes, Route } from 'react-router-dom';
 import { useMediaQuery } from './hooks/useMediaQuery';
 import WebLayout from './layouts/WebLayout';
 import WebOverview from './pages/WebOverview';
+import WebProAnalytics from './pages/WebProAnalytics';
 import WebTransactions from './pages/WebTransactions';
 import WebPlan from './pages/WebPlan';
 import WebGoals from './pages/WebGoals';
@@ -31,6 +32,7 @@ export default function App() {
   const [currentPeriod, setCurrentPeriod] = useState(null);
   const [expenses, setExpenses] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [isPro, setIsPro] = useState(false);
   
   const isWebLayout = useMediaQuery('(min-width: 768px)');
 
@@ -60,10 +62,27 @@ export default function App() {
     setTheme(prev => (prev === 'dark' ? 'light' : 'dark'));
   };
 
+  
+  const upgradeToPro = async () => {
+    try {
+      if (user) {
+        const updatedUser = await databaseService.updateUserMetadata({ is_pro: true });
+        setUser(updatedUser);
+      }
+      localStorage.setItem('spendly_is_pro', 'true');
+      setIsPro(true);
+      return true;
+    } catch (e) {
+      console.error(e);
+      return false;
+    }
+  };
+
   // Load data on start & user change
   const loadData = async (currentUser) => {
     try {
       setLoading(true);
+      setIsPro(currentUser?.user_metadata?.is_pro === true || localStorage.getItem('spendly_is_pro') === 'true');
       const periods = await storageService.getPeriods(currentUser);
 
       // Find active period for today
@@ -294,7 +313,7 @@ export default function App() {
     };
 
     return (
-      <WebLayout user={user} onLogout={handleLogout}>
+      <WebLayout user={user} onLogout={handleLogout} isPro={isPro}>
         {!currentPeriod ? (
           <WebPeriodSetup onPeriodCreated={handlePeriodCreated} currency={currency} />
         ) : (
@@ -304,6 +323,7 @@ export default function App() {
             <Route path="/plan" element={<WebPlan {...webContext} />} />
             <Route path="/goals" element={<WebGoals {...webContext} />} />
             <Route path="/settings" element={<WebSettings {...webContext} />} />
+              <Route path="/pro" element={<WebProAnalytics {...webContext} />} />
             <Route path="*" element={<WebOverview {...webContext} />} />
           </Routes>
         )}
@@ -339,7 +359,8 @@ export default function App() {
             letterSpacing: '-0.02em'
           }}>
             {t('appName')}
-          </h1>
+              {isPro && <span style={{ fontSize: '0.65rem', background: 'var(--accent-primary)', color: '#000', padding: '2px 6px', borderRadius: '4px', fontWeight: '800', marginLeft: '6px', verticalAlign: 'middle' }}>PRO</span>}
+            </h1>
         </div>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -438,7 +459,7 @@ export default function App() {
           ) : (
             <>
               {/* Daily Dashboard Card */}
-              <Dashboard
+              <Dashboard isPro={isPro} upgradeToPro={upgradeToPro}
                 currency={currency}
                 availableToday={availableToday}
                 baseDailyLimit={baseDailyLimit}
@@ -495,7 +516,7 @@ export default function App() {
           )}
         </>
       ) : (
-        <Analytics expenses={expenses} salary={salary} />
+        <Analytics expenses={expenses} salary={salary} isPro={isPro} upgradeToPro={upgradeToPro} />
       )}
 
       {/* MODALS */}

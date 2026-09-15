@@ -4,7 +4,7 @@ import Sidebar from './Sidebar';
 import LanguageSwitcher from '../components/LanguageSwitcher';
 import { Globe, Moon, Sun } from 'lucide-react';
 
-export default function WebLayout({ user, onLogout, children }) {
+export default function WebLayout({ user, onLogout, children, isPro }) {
   const { i18n } = useTranslation();
   const [theme, setTheme] = React.useState(localStorage.getItem('spendly_theme') || 'dark');
 

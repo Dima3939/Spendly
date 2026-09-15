@@ -8,7 +8,7 @@ import {
   Target, 
   Settings, 
   LogOut 
-} from 'lucide-react';
+, Sparkles} from 'lucide-react';
 
 export default function Sidebar({ user, onLogout }) {
   const { t } = useTranslation();
@@ -79,7 +79,24 @@ export default function Sidebar({ user, onLogout }) {
             {item.label}
           </NavLink>
         ))}
-      </nav>
+      
+          <NavLink
+            to="/pro"
+            style={({ isActive }) => ({
+              display: 'flex', alignItems: 'center', gap: '12px',
+              padding: '10px 16px', borderRadius: 'var(--radius-md)',
+              textDecoration: 'none',
+              background: isActive ? 'rgba(21, 214, 119, 0.1)' : 'transparent',
+              color: isActive ? 'var(--accent-primary)' : 'var(--text-secondary)',
+              fontWeight: isActive ? '600' : '500',
+              transition: 'all 0.2s'
+            })}
+          >
+            <Sparkles size={20} />
+            {t('proAnalytics', 'Pro Analytics')}
+          </NavLink>
+        </nav>
+
 
       {/* Footer / User */}
       <div style={{ padding: '24px', borderTop: '1px solid var(--border-subtle)', marginTop: 'auto' }}>
