@@ -4,6 +4,19 @@ import { initReactI18next } from 'react-i18next';
 const resources = {
   en: {
     translation: {
+      goalPromptDesc: "Give your savings a clear target and timeline.",
+
+      proUnlockSub: "Unlock advanced analytics and take absolute control of your finances.",
+      proFeat1: "Advanced Interactive Charts (Burn Rate, Distributions)",
+      proFeat2: "Historical Trends & Comparisons",
+      proFeat3: "Unlimited Categories & Goals",
+      proFeat4: "Priority Support & Cloud Sync",
+      proFeat5: "Custom Themes (Coming Soon)",
+      proUpgradeBtn: "Upgrade for $4.99",
+      proPromoText: "Have a promo code?",
+      proPromoApply: "Apply",
+      proPromoPlaceholder: "ENTER CODE",
+
       goalsDesc: "Track several goals and see the monthly contribution needed to stay on time.",
       goalLaptop: "New Laptop",
       goalVacation: "Summer Vacation",
@@ -199,6 +212,19 @@ const resources = {
   },
   ru: {
     translation: {
+      goalPromptDesc: "Задайте вашим сбережениям четкую цель и срок.",
+
+      proUnlockSub: "Откройте продвинутую аналитику и возьмите под контроль свои финансы.",
+      proFeat1: "Интерактивные графики (Burn Rate, Распределения)",
+      proFeat2: "Исторические тренды и сравнения",
+      proFeat3: "Безлимитные категории и цели",
+      proFeat4: "Приоритетная поддержка и облачная синхронизация",
+      proFeat5: "Пользовательские темы (Скоро)",
+      proUpgradeBtn: "Улучшить за $4.99",
+      proPromoText: "Есть промокод?",
+      proPromoApply: "Применить",
+      proPromoPlaceholder: "ВВЕДИТЕ КОД",
+
       goalsDesc: "Отслеживайте несколько целей и узнайте, сколько нужно откладывать каждый месяц.",
       goalLaptop: "Новый Ноутбук",
       goalVacation: "Летний Отпуск",

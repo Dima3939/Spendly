@@ -60,7 +60,7 @@ export default function ProPaywallModal({ isOpen, onClose, onUpgrade }) {
             Spendly <span style={{ color: 'var(--accent-primary)' }}>PRO</span>
           </h2>
           <p style={{ color: 'var(--text-secondary)', fontSize: '1.1rem' }}>
-            Unlock advanced analytics and take absolute control of your finances.
+            {t('proUnlockSub')}
           </p>
         </div>
 
@@ -68,11 +68,11 @@ export default function ProPaywallModal({ isOpen, onClose, onUpgrade }) {
         <div style={{ padding: '24px' }}>
           <ul style={{ listStyle: 'none', padding: 0, margin: '0 0 24px 0', display: 'flex', flexDirection: 'column', gap: '16px' }}>
             {[
-              'Advanced Interactive Charts (Burn Rate, Distributions)',
-              'Historical Trends & Comparisons',
-              'Unlimited Categories & Goals',
-              'Priority Support & Cloud Sync',
-              'Custom Themes (Coming Soon)'
+              t('proFeat1'),
+              t('proFeat2'),
+              t('proFeat3'),
+              t('proFeat4'),
+              t('proFeat5')
             ].map((feature, i) => (
               <li key={i} style={{ display: 'flex', alignItems: 'center', gap: '12px', fontSize: '1.05rem', color: 'var(--text-primary)' }}>
                 <CheckCircle2 size={20} color="var(--accent-primary)" />
@@ -96,12 +96,12 @@ export default function ProPaywallModal({ isOpen, onClose, onUpgrade }) {
             onMouseEnter={e => e.currentTarget.style.transform = 'scale(1.02)'}
             onMouseLeave={e => e.currentTarget.style.transform = 'scale(1)'}
           >
-            Upgrade for $4.99
+            {t('proUpgradeBtn')}
           </button>
 
           <div style={{ textAlign: 'center', marginTop: '16px' }}>
             <p style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', marginBottom: '8px' }}>
-              Have a promo code?
+              {t('proPromoText')}
             </p>
             <div style={{ display: 'flex', gap: '8px' }}>
               <input 
