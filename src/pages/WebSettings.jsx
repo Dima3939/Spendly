@@ -1,12 +1,12 @@
 import { exportTransactionsToCSV } from '../utils/exportCsv';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { User, LogOut, Shield, Bell, Palette, Download, Volume2, Music } from 'lucide-react';
+import { Palette, Download, Volume2 } from 'lucide-react';
 
 import { useState } from 'react';
 import databaseService from '../services/SupabaseService';
 
-export default function WebSettings({ user, currentPeriod, currency, setCurrency, handleResetPeriod, setUser, isPro, upgradeToPro, soundEnabled, setSoundEnabled, accentTheme, setAccentTheme, expenses }) {
+export default function WebSettings({ user, currency, setCurrency, handleResetPeriod, setUser, isPro, upgradeToPro, soundEnabled, setSoundEnabled, accentTheme, setAccentTheme, expenses }) {
   const [isEditingProfile, setIsEditingProfile] = useState(false);
   const [newName, setNewName] = useState(user?.user_metadata?.username || user?.email || localStorage.getItem('spendly_guest_name') || 'Guest User');
   const { t } = useTranslation();

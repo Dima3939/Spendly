@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Repeat, Plus, Trash2, CreditCard } from 'lucide-react';
 import storageService from '../services/StorageService';
@@ -30,6 +30,7 @@ export default function WebSubscriptions({ user, currency }) {
 
   useEffect(() => {
     loadSubs();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user]);
 
   const handleAdd = async (e) => {

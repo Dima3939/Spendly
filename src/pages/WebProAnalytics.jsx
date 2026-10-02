@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { AreaChart, Area, BarChart, Bar, LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Legend } from 'recharts';
+import { AreaChart, Area, BarChart, Bar, LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, } from 'recharts';
 import { Sparkles, Lock } from 'lucide-react';
 import ProPaywallModal from '../components/ProPaywallModal';
 
@@ -17,6 +17,7 @@ export default function WebProAnalytics({ expenses = [], salary = 0, isPro, upgr
   });
   
   const sortedDays = Object.keys(dailyMap).sort();
+  // eslint-disable-next-line
   let cumulative = 0;
   const burnData = sortedDays.map(day => {
     cumulative += dailyMap[day];

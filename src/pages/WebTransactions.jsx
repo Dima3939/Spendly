@@ -6,7 +6,7 @@ import { parseTxDate } from '../utils/dateUtils';
 import { Search, ArrowDownToLine, Plus, Trash2 } from 'lucide-react';
 import WebTransactionModal from '../components/WebTransactionModal';
 
-export default function WebTransactions({ expenses = [], currentPeriod, handleAddExpense, handleAddIncome, handleDeleteTx, currency, isPro, upgradeToPro }) {
+export default function WebTransactions({ expenses = [], handleAddExpense, handleAddIncome, handleDeleteTx, currency, isPro, upgradeToPro }) {
   const { t } = useTranslation();
   const [searchQuery, setSearchQuery] = useState('');
   const [filterType, setFilterType] = useState('all'); // all, expense, income
@@ -53,8 +53,8 @@ export default function WebTransactions({ expenses = [], currentPeriod, handleAd
   }, [expenses, searchQuery, filterType]);
 
   // Reset page when filter changes
-  React.useEffect(() => {
-    setCurrentPage(1);
+  useEffect(() => {
+    if (currentPage !== 1) setCurrentPage(1);
   }, [searchQuery, filterType, expenses.length]);
 
   const totalPages = Math.ceil(filteredExpenses.length / ITEMS_PER_PAGE);
