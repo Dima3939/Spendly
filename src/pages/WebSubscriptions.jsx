@@ -66,8 +66,8 @@ export default function WebSubscriptions({ user, currency }) {
     <div className="animate-fade-in" style={{ padding: '20px' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '40px' }}>
         <div>
-          <h2 style={{ fontSize: '2rem', fontWeight: '800', marginBottom: '8px' }}>Subscriptions</h2>
-          <p style={{ color: 'var(--text-secondary)' }}>Manage recurring payments (Netflix, Rent, etc.)</p>
+          <h2 style={{ fontSize: '2rem', fontWeight: '800', marginBottom: '8px' }}>{t('subsTitle')}</h2>
+          <p style={{ color: 'var(--text-secondary)' }}>{t('subsDesc')}</p>
         </div>
         <button 
           onClick={() => setIsAdding(!isAdding)}
@@ -91,16 +91,16 @@ export default function WebSubscriptions({ user, currency }) {
 
       {isAdding && (
         <div style={{ background: 'var(--bg-card)', padding: '24px', borderRadius: 'var(--radius-lg)', border: '1px solid var(--border-subtle)', marginBottom: '32px' }}>
-          <h3 style={{ marginBottom: '20px' }}>Add Subscription</h3>
+          <h3 style={{ marginBottom: '20px' }}>{t('subsAddTitle')}</h3>
           <form onSubmit={handleAdd} style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
-            <input type="text" placeholder="Title (e.g. Spotify)" value={title} onChange={e => setTitle(e.target.value)} required style={{ padding: '12px', background: 'var(--bg-input)', border: '1px solid var(--border-subtle)', borderRadius: 'var(--radius-md)', color: 'var(--text-primary)' }} />
-            <input type="number" placeholder="Amount" step="any" value={amount} onChange={e => setAmount(e.target.value)} required style={{ padding: '12px', background: 'var(--bg-input)', border: '1px solid var(--border-subtle)', borderRadius: 'var(--radius-md)', color: 'var(--text-primary)' }} />
+            <input type="text" placeholder={t('subsInputTitle')} value={title} onChange={e => setTitle(e.target.value)} required style={{ padding: '12px', background: 'var(--bg-input)', border: '1px solid var(--border-subtle)', borderRadius: 'var(--radius-md)', color: 'var(--text-primary)' }} />
+            <input type="number" placeholder={t('subsInputAmount')} step="any" value={amount} onChange={e => setAmount(e.target.value)} required style={{ padding: '12px', background: 'var(--bg-input)', border: '1px solid var(--border-subtle)', borderRadius: 'var(--radius-md)', color: 'var(--text-primary)' }} />
             <input type="date" value={nextDate} onChange={e => setNextDate(e.target.value)} required style={{ padding: '12px', background: 'var(--bg-input)', border: '1px solid var(--border-subtle)', borderRadius: 'var(--radius-md)', color: 'var(--text-primary)' }} />
             <select value={cycle} onChange={e => setCycle(e.target.value)} style={{ padding: '12px', background: 'var(--bg-input)', border: '1px solid var(--border-subtle)', borderRadius: 'var(--radius-md)', color: 'var(--text-primary)' }}>
-              <option value="monthly">Monthly</option>
-              <option value="yearly">Yearly</option>
+              <option value="monthly">{t('subsMonthly')}</option>
+              <option value="yearly">{t('subsYearly')}</option>
             </select>
-            <button type="submit" style={{ gridColumn: 'span 2', padding: '14px', background: 'var(--accent-primary)', color: '#fff', border: 'none', borderRadius: 'var(--radius-md)', fontWeight: '700', cursor: 'pointer' }}>Save Subscription</button>
+            <button type="submit" style={{ gridColumn: 'span 2', padding: '14px', background: 'var(--accent-primary)', color: '#fff', border: 'none', borderRadius: 'var(--radius-md)', fontWeight: '700', cursor: 'pointer' }}>{t('subsSave')}</button>
           </form>
         </div>
       )}
@@ -110,8 +110,8 @@ export default function WebSubscriptions({ user, currency }) {
       ) : subscriptions.length === 0 ? (
         <div style={{ textAlign: 'center', padding: '60px 20px', background: 'var(--bg-card)', borderRadius: 'var(--radius-lg)', border: '1px dashed var(--border-subtle)' }}>
           <Repeat size={48} color="var(--text-muted)" style={{ marginBottom: '16px' }} />
-          <h3 style={{ fontSize: '1.2rem', color: 'var(--text-primary)', marginBottom: '8px' }}>No subscriptions yet</h3>
-          <p style={{ color: 'var(--text-secondary)' }}>Add your recurring payments and they will be deducted automatically.</p>
+          <h3 style={{ fontSize: '1.2rem', color: 'var(--text-primary)', marginBottom: '8px' }}>{t('subsEmptyTitle')}</h3>
+          <p style={{ color: 'var(--text-secondary)' }}>{t('subsEmptyDesc')}</p>
         </div>
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
@@ -124,7 +124,7 @@ export default function WebSubscriptions({ user, currency }) {
                 <div>
                   <h4 style={{ fontSize: '1.1rem', fontWeight: '700', margin: '0 0 4px 0' }}>{sub.title}</h4>
                   <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
-                    {sub.billing_cycle === 'monthly' ? 'Monthly' : 'Yearly'} • Next bill: {new Date(sub.next_billing_date).toLocaleDateString()}
+                    {sub.billing_cycle === 'monthly' ? 'Monthly' : 'Yearly'} • {t('subsNextBill')} {new Date(sub.next_billing_date).toLocaleDateString()}
                   </div>
                 </div>
               </div>

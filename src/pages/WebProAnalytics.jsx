@@ -52,8 +52,8 @@ export default function WebProAnalytics({ expenses = [], salary = 0, isPro, upgr
       <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '32px' }}>
         <Sparkles size={32} color="var(--accent-primary)" />
         <div>
-          <h2 style={{ fontSize: '2rem', fontWeight: '800', marginBottom: '4px' }}>Pro Analytics</h2>
-          <p style={{ color: 'var(--text-secondary)' }}>Deep insights and advanced financial charts.</p>
+          <h2 style={{ fontSize: '2rem', fontWeight: '800', marginBottom: '4px' }}>{t('proTitle')}</h2>
+          <p style={{ color: 'var(--text-secondary)' }}>{t('proDesc')}</p>
         </div>
       </div>
 
@@ -66,7 +66,7 @@ export default function WebProAnalytics({ expenses = [], salary = 0, isPro, upgr
         
         {/* Burn Rate Area Chart */}
         <div style={{ background: 'var(--bg-card)', padding: '24px', borderRadius: 'var(--radius-lg)', border: '1px solid var(--border-subtle)', gridColumn: '1 / -1' }}>
-          <h3 style={{ fontSize: '1.2rem', fontWeight: '700', marginBottom: '24px', color: 'var(--text-primary)' }}>Cumulative Spend (Burn Rate)</h3>
+          <h3 style={{ fontSize: '1.2rem', fontWeight: '700', marginBottom: '24px', color: 'var(--text-primary)' }}>{t('proChartCumulative')}</h3>
           <div style={{ width: '100%', height: 300 }}>
             {burnData.length > 0 ? (
               <ResponsiveContainer>

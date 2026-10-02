@@ -121,11 +121,11 @@ export default function WebTransactionModal({ isOpen, onClose, onAddExpense, onA
           {/* AI Smart Input */}
           <div style={{ marginBottom: '24px', background: 'linear-gradient(135deg, rgba(21, 214, 119, 0.1) 0%, transparent 100%)', padding: '16px', borderRadius: 'var(--radius-lg)', border: '1px solid var(--border-subtle)' }}>
             <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.9rem', fontWeight: '700', color: 'var(--accent-primary)', marginBottom: '12px' }}>
-              <span style={{ fontSize: '1.2rem' }}>🤖</span> Smart Input
+              <span style={{ fontSize: '1.2rem' }}>🤖</span> {t('smartTitle')}
             </label>
             <input 
               type="text" 
-              placeholder="e.g. Taxi 15, Coffee 5..."
+              placeholder={t('smartPlaceholder')}
               value={smartInput}
               onChange={handleSmartInputChange}
               style={{
@@ -141,7 +141,7 @@ export default function WebTransactionModal({ isOpen, onClose, onAddExpense, onA
               }}
             />
             <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: '8px' }}>
-              Type your expense naturally. We'll fill the form below automatically!
+              {t('smartHelp')}
             </div>
           </div>
 

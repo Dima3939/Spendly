@@ -177,8 +177,8 @@ export default function WebSettings({ user, currentPeriod, currency, setCurrency
               <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
                 <Volume2 color="var(--text-muted)" />
                 <div>
-                  <div style={{ fontWeight: '600', marginBottom: '4px' }}>Sound & Haptics</div>
-                  <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>Play a soft pop sound when adding transactions</div>
+                  <div style={{ fontWeight: '600', marginBottom: '4px' }}>{t('soundTitle')}</div>
+                  <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>{t('soundDesc')}</div>
                 </div>
               </div>
               <input 
@@ -201,7 +201,7 @@ export default function WebSettings({ user, currentPeriod, currency, setCurrency
                     Accent Theme
                     {!isPro && <span style={{ fontSize: '0.65rem', background: 'var(--accent-primary)', color: '#000', padding: '2px 6px', borderRadius: '4px', fontWeight: '800' }}>PRO</span>}
                   </div>
-                  <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>Customize your app color</div>
+                  <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>{t('themeDesc')}</div>
                 </div>
               </div>
               <div style={{ display: 'flex', gap: '8px', opacity: isPro ? 1 : 0.5, pointerEvents: isPro ? 'auto' : 'none' }}>
@@ -244,7 +244,7 @@ export default function WebSettings({ user, currentPeriod, currency, setCurrency
                     Export Data (CSV)
                     {!isPro && <span style={{ fontSize: '0.65rem', background: 'var(--accent-primary)', color: '#000', padding: '2px 6px', borderRadius: '4px', fontWeight: '800' }}>PRO</span>}
                   </div>
-                  <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>Download all your transactions as a spreadsheet</div>
+                  <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>{t('exportDesc')}</div>
                 </div>
               </div>
               <button 
