@@ -210,7 +210,7 @@ export default function WebGoals({ currentPeriod, currency }) {
             </form>
           </div>
         </div>
-      )}
+      , document.body)}
     </div>
   );
 }
