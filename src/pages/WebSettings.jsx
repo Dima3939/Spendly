@@ -1,7 +1,7 @@
 import { exportTransactionsToCSV } from '../utils/exportCsv';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { Palette, Download, Volume2 } from 'lucide-react';
+import { Palette, Download, Volume2, Bell } from 'lucide-react';
 
 import { useState } from 'react';
 import databaseService from '../services/SupabaseService';

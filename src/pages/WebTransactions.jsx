@@ -1,5 +1,5 @@
 import { exportTransactionsToCSV } from '../utils/exportCsv';
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import i18n from '../i18n';
 import { parseTxDate } from '../utils/dateUtils';
