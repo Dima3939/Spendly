@@ -136,9 +136,9 @@ export default function WebProAnalytics({ expenses = [], salary = 0, isPro, upgr
             textAlign: 'center', maxWidth: '400px'
           }}>
             <Lock size={48} color="var(--accent-primary)" style={{ margin: '0 auto 16px' }} />
-            <h3 style={{ fontSize: '1.5rem', fontWeight: '700', marginBottom: '8px', color: 'var(--text-primary)' }}>Unlock Pro Analytics</h3>
+            <h3 style={{ fontSize: '1.5rem', fontWeight: '700', marginBottom: '8px', color: 'var(--text-primary)' }}>{t('proUnlockTitle')}</h3>
             <p style={{ color: 'var(--text-secondary)', marginBottom: '24px' }}>
-              Get deep insights into your spending habits with interactive charts and historical trends.
+              {t('proUnlockDesc')}
             </p>
             <button 
               onClick={() => setShowPaywall(true)}
@@ -149,7 +149,7 @@ export default function WebProAnalytics({ expenses = [], salary = 0, isPro, upgr
                 boxShadow: 'var(--shadow-glow)', width: '100%'
               }}
             >
-              Learn More
+              {t('proLearnMore')}
             </button>
           </div>
         </div>

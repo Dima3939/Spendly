@@ -7,8 +7,8 @@ export default function WebGoals({ currentPeriod , currency}) {
   
   // Mock data for goals since we don't have a goals table yet
   const mockupGoals = [
-    { id: 1, title: 'New Laptop', target: 2000, saved: 450, deadline: '2027-01-01', emoji: '💻' },
-    { id: 2, title: 'Summer Vacation', target: 5000, saved: 1200, deadline: '2027-06-01', emoji: '🏖️' }
+    { id: 1, title: t('goalLaptop'), target: 2000, saved: 450, deadline: '2027-01-01', emoji: '💻' },
+    { id: 2, title: t('goalVacation'), target: 5000, saved: 1200, deadline: '2027-06-01', emoji: '🏖️' }
   ];
 
   const formatMoney = (val) => {
@@ -37,7 +37,7 @@ export default function WebGoals({ currentPeriod , currency}) {
       </div>
 
       <p style={{ color: 'var(--text-secondary)', marginBottom: '32px', fontSize: '1.05rem' }}>
-        Track several goals and see the monthly contribution needed to stay on time.
+        {t('goalsDesc')}
       </p>
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(340px, 1fr))', gap: '24px' }}>
@@ -66,12 +66,12 @@ export default function WebGoals({ currentPeriod , currency}) {
               
               <h3 style={{ fontSize: '1.4rem', fontWeight: '700', marginBottom: '8px' }}>{goal.title}</h3>
               <div style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', marginBottom: '24px' }}>
-                Deadline: {new Date(goal.deadline).toLocaleDateString('ru-RU')}
+                {t('deadlineLabel')} {new Date(goal.deadline).toLocaleDateString('ru-RU')}
               </div>
 
               <div style={{ marginTop: 'auto' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px', fontSize: '0.9rem' }}>
-                  <span style={{ fontWeight: '600' }}>{formatMoney(goal.saved)} {currency} saved</span>
+                  <span style={{ fontWeight: '600' }}>{formatMoney(goal.saved)} {currency} {t('savedLabel')}</span>
                   <span style={{ color: 'var(--text-muted)' }}>{Math.round(progress)}%</span>
                 </div>
                 <div style={{ width: '100%', height: '8px', background: 'var(--bg-input)', borderRadius: '999px', overflow: 'hidden' }}>

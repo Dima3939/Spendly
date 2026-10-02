@@ -94,9 +94,9 @@ export default function WebTransactionModal({ isOpen, onClose, onAddExpense, onA
         }}>
           <div>
             <div style={{ color: 'var(--accent-primary)', fontSize: '0.8rem', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '4px' }}>
-              New Transaction
+              {t('txModalSupra')}
             </div>
-            <h2 style={{ fontSize: '1.8rem', fontWeight: '800', margin: 0 }}>Log an entry</h2>
+            <h2 style={{ fontSize: '1.8rem', fontWeight: '800', margin: 0 }}>{t('txModalTitle')}</h2>
           </div>
           
           <button 
@@ -161,15 +161,15 @@ export default function WebTransactionModal({ isOpen, onClose, onAddExpense, onA
               <Camera size={24} />
             </div>
             <div>
-              <div style={{ fontWeight: '600', color: 'var(--text-primary)' }}>Scan a receipt</div>
-              <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>Take a photo or choose one from your library</div>
+              <div style={{ fontWeight: '600', color: 'var(--text-primary)' }}>{t('txScanReceipt')}</div>
+              <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>{t('txScanDesc')}</div>
             </div>
           </div>
 
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', marginBottom: '20px' }}>
             {/* Type */}
             <div>
-              <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: '600', marginBottom: '8px', color: 'var(--text-primary)' }}>Type</label>
+              <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: '600', marginBottom: '8px', color: 'var(--text-primary)' }}>{t('txTypeLabel')}</label>
               <select 
                 value={type} 
                 onChange={e => setType(e.target.value)}
@@ -185,19 +185,19 @@ export default function WebTransactionModal({ isOpen, onClose, onAddExpense, onA
                   cursor: 'pointer'
                 }}
               >
-                <option value="expense">Expense</option>
-                <option value="income">Income</option>
+                <option value="expense">{t('txTypeExpense')}</option>
+                <option value="income">{t('txTypeIncome')}</option>
               </select>
             </div>
 
             {/* Merchant / Source */}
             <div>
-              <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: '600', marginBottom: '8px', color: 'var(--text-primary)' }}>Merchant or source</label>
+              <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: '600', marginBottom: '8px', color: 'var(--text-primary)' }}>{t('txMerchantLabel')}</label>
               <input 
                 type="text" 
                 value={title}
                 onChange={e => setTitle(e.target.value)}
-                placeholder="e.g. Starbucks, Salary"
+                placeholder={t('txMerchantPl')}
                 style={{
                   width: '100%',
                   padding: '12px 16px',
@@ -213,7 +213,7 @@ export default function WebTransactionModal({ isOpen, onClose, onAddExpense, onA
 
             {/* Amount */}
             <div>
-              <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: '600', marginBottom: '8px', color: 'var(--text-primary)' }}>Amount ({currency})</label>
+              <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: '600', marginBottom: '8px', color: 'var(--text-primary)' }}>{t('txAmountLabel')} ({currency})</label>
               <input 
                 type="number" 
                 step="0.01"
@@ -237,7 +237,7 @@ export default function WebTransactionModal({ isOpen, onClose, onAddExpense, onA
 
             {/* Date */}
             <div>
-              <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: '600', marginBottom: '8px', color: 'var(--text-primary)' }}>Date</label>
+              <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: '600', marginBottom: '8px', color: 'var(--text-primary)' }}>{t('txDateLabel')}</label>
               <input 
                 type="date"
                 value={date}
@@ -258,7 +258,7 @@ export default function WebTransactionModal({ isOpen, onClose, onAddExpense, onA
 
             {/* Category */}
             <div>
-              <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: '600', marginBottom: '8px', color: 'var(--text-primary)' }}>Category</label>
+              <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: '600', marginBottom: '8px', color: 'var(--text-primary)' }}>{t('txCategoryLabel')}</label>
               <select 
                 value={category}
                 onChange={e => setCategory(e.target.value)}
@@ -282,12 +282,12 @@ export default function WebTransactionModal({ isOpen, onClose, onAddExpense, onA
 
             {/* Tags */}
             <div>
-              <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: '600', marginBottom: '8px', color: 'var(--text-primary)' }}>Tags</label>
+              <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: '600', marginBottom: '8px', color: 'var(--text-primary)' }}>{t('txTagsLabel')}</label>
               <input 
                 type="text" 
                 value={tags}
                 onChange={e => setTags(e.target.value)}
-                placeholder="work, travel"
+                placeholder={t('txTagsPl')}
                 style={{
                   width: '100%',
                   padding: '12px 16px',
@@ -305,7 +305,7 @@ export default function WebTransactionModal({ isOpen, onClose, onAddExpense, onA
           {/* Mark as needing review (mockup) */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '24px' }}>
             <input type="checkbox" id="review-checkbox" style={{ width: '16px', height: '16px', cursor: 'pointer' }} />
-            <label htmlFor="review-checkbox" style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', cursor: 'pointer' }}>Mark as needing review</label>
+            <label htmlFor="review-checkbox" style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', cursor: 'pointer' }}>{t('txReview')}</label>
           </div>
 
           <button 
@@ -321,7 +321,7 @@ export default function WebTransactionModal({ isOpen, onClose, onAddExpense, onA
               boxShadow: '0 4px 14px rgba(16, 185, 129, 0.4)'
             }}
           >
-            Save transaction
+            {t('txSaveBtn')}
           </button>
         </form>
       </div>

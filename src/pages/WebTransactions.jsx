@@ -78,7 +78,7 @@ export default function WebTransactions({ expenses = [], currentPeriod, handleAd
           boxShadow: 'var(--shadow-glow)'
         }}>
           <Plus size={18} />
-          Add transaction
+          {t('addTxBtn')}
         </button>
       </div>
 
@@ -139,7 +139,7 @@ export default function WebTransactions({ expenses = [], currentPeriod, handleAd
 
           <button onClick={() => { if (isPro) { exportTransactionsToCSV(expenses, currency); } else { upgradeToPro(); } }} style={{ background: 'var(--bg-input)', border: '1px solid var(--border-subtle)', color: 'var(--text-primary)', padding: '10px 16px', borderRadius: 'var(--radius-sm)', display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontWeight: '500' }}>
               <ArrowDownToLine size={18} />
-              Export CSV {!isPro && <span style={{ fontSize: '0.65rem', background: 'var(--accent-primary)', color: '#000', padding: '2px 6px', borderRadius: '4px', fontWeight: '800' }}>PRO</span>}
+              {t('exportCsvBtn')} {!isPro && <span style={{ fontSize: '0.65rem', background: 'var(--accent-primary)', color: '#000', padding: '2px 6px', borderRadius: '4px', fontWeight: '800' }}>PRO</span>}
             </button>
         </div>
       </div>
@@ -220,7 +220,7 @@ export default function WebTransactions({ expenses = [], currentPeriod, handleAd
           }}>
             <div style={{ fontSize: '3rem', marginBottom: '16px', opacity: 0.5 }}>🧾</div>
             <h3 style={{ fontSize: '1.2rem', fontWeight: '600', marginBottom: '8px', color: 'var(--text-primary)' }}>{t('noTransactions')}</h3>
-            <p>Change the filters or log a new entry</p>
+            <p>{t('txEmptyDesc')}</p>
           </div>
         )}
       </div>

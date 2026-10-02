@@ -85,7 +85,7 @@ export default function WebSubscriptions({ user, currency }) {
           }}
         >
           <Plus size={18} />
-          {isAdding ? 'Cancel' : 'Add New'}
+          {isAdding ? t('cancel') : t('subsAdd')}
         </button>
       </div>
 
