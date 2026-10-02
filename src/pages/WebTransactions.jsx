@@ -6,7 +6,7 @@ import { parseTxDate } from '../utils/dateUtils';
 import { Search, ArrowDownToLine, Plus, Trash2 } from 'lucide-react';
 import WebTransactionModal from '../components/WebTransactionModal';
 
-export default function WebTransactions({ expenses = [], currentPeriod, handleAddExpense, handleAddIncome, handleDeleteTx , currency}) {
+export default function WebTransactions({ expenses = [], currentPeriod, handleAddExpense, handleAddIncome, handleDeleteTx, currency, isPro, upgradeToPro }) {
   const { t } = useTranslation();
   const [searchQuery, setSearchQuery] = useState('');
   const [filterType, setFilterType] = useState('all'); // all, expense, income
